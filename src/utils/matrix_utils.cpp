@@ -1,11 +1,10 @@
 #include "utils/matrix_utils.hpp"
-#include <vector>
 #include <iostream>
 using namespace std;
 
 // Function to allocate a matrix dynamically
-vector<vector<float>> allocateMatrix(const int rows, const int cols) {
-    vector<vector<float>> matrix(rows, vector<float>(cols, 0.0f));
+vector<vector<float>> allocateMatrix(const int rows, const int cols, const float value) {
+    vector<vector<float>> matrix(rows, vector<float>(cols, value));
     return matrix;
 }
 
