@@ -24,6 +24,8 @@ vector<vector<float>> matrixAddition(const vector<vector<float>>& A, const vecto
             result[i][j] = A[i][j] + B[i][j];
         }
     }
+
+    cout << "finished matrix addition" << endl;
     return result;
 }
 
@@ -83,7 +85,7 @@ vector<vector<float>> matrixTranspose(const vector<vector<float>>& A) {
 // Function to print a matrix
 void printMatrix(const vector<vector<float>>& matrix) {
     const int n = matrix.size(), m = matrix[0].size();
-    
+
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < m; j++) {
             printf("%.2f ", matrix[i][j]);
