@@ -11,6 +11,8 @@ class Linear : public Module{
         virtual vector<vector<float>> backward(const vector<vector<float>>& grad_output) override;
         virtual void update_params(const float lr) override;
 
+        void randomizeParams();
+
         void setWeights(const vector<vector<float>>& desiredWeights) {
             this->weights_ = desiredWeights;
         };
