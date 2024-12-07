@@ -2,48 +2,78 @@
 #include <vector>
 #include "modules/layers/linear.hpp"
 #include "utils/matrix_utils.hpp"
+#include "modules/losses/mse.hpp"
 using namespace nn;
 
 int main() {
-    Linear linear(3, 4, false);
+    const bool bias = true;
 
-    vector<vector<float>> input = allocateMatrix(2, 3);
-    input[0][0] = 1.0f;
-    input[0][1] = 2.0f;
-    input[0][2] = 3.0f;
-    input[1][0] = 4.0f;
-    input[1][1] = 5.0f;
-    input[1][2] = 6.0f;
+    Linear linear_1(3, 5, bias);
+    Linear linear_2(5, 2, bias);
+
+    vector<vector<float>> specific_weights_1 = {
+        {1.0f, 4.0f, 7.0f, 10.0f, 13.0f},
+        {2.0f, 5.0f, 8.0f, 11.0f, 14.0f},
+        {3.0f, 6.0f, 9.0f, 12.0f, 15.0f}
+    };
+
+    std::vector<std::vector<float>> input = {
+        {1.0f, 2.0f, 3.0f},
+        {4.0f, 5.0f, 6.0f},
+        {7.0f, 8.0f, 9.0f},
+        {10.0f, 11.0f, 12.0f}
+    };
+    
+    std::vector<std::vector<float>> specific_weights_2 = {
+        {1.0f, 6.0f},  // First column (original first row)
+        {2.0f, 7.0f},  // Second column (original first row)
+        {3.0f, 8.0f},  // Third column (original first row)
+        {4.0f, 9.0f},  // Fourth column (original first row)
+        {5.0f, 10.0f}  // Fifth column (original first row)
+    };
+
+    std::vector<std::vector<float>> specific_bias_1 = {
+        {2.0f},  // First row
+        {4.0f},  // Second row
+        {6.0f},  // Third row
+        {8.0f},  // Fourth row
+        {10.0f}  // Fifth row
+    };
+
+    std::vector<std::vector<float>> specific_bias_2 = {
+        {3.0f},  // First row
+        {6.0f}   // Second row
+    };
+
+    linear_1.setWeights(specific_weights_1);
+    linear_2.setWeights(specific_weights_2);
+
+    linear_1.setBiases(specific_bias_1);
+    linear_2.setBiases(specific_bias_2);
 
     printMatrix(input);
 
     cout << endl;
 
-    cout << "Batch size in main: " << sizeof(input) / sizeof(float) << endl;
+    vector<vector<float>> output_1 = linear_1.forward(input);
+    vector<vector<float>> Y = linear_2.forward(output_1);
 
-    vector<vector<float>> weights = allocateMatrix(3, 4);
-    weights[0][0] = 1.0f;
-    weights[0][1] = 2.0f;
-    weights[0][2] = 3.0f;
-    weights[0][3] = 4.0f;
-    weights[1][0] = 5.0f;
-    weights[1][1] = 6.0f;
-    weights[1][2] = 7.0f;
-    weights[1][3] = 8.0f;
-    weights[2][0] = 9.0f;
-    weights[2][1] = 10.0f;
-    weights[2][2] = 11.0f;
-    weights[2][3] = 12.0f;
+    printMatrix(Y);
 
-    cout << "Weights rows: " << sizeof(weights) / sizeof(float) << endl;
+    cout << endl;
 
-    linear.setWeights(weights);
+    std::vector<std::vector<float>> Y_hat = {
+        {100.0f, 200.0f},   // First row
+        {400.0f, 500.0f},   // Second row
+        {700.0f, 800.0f},   // Third row
+        {1000.0f, 1100.0f}  // Fourth row
+    };
 
-    printMatrix(linear.getWeights());
+    MSE mse;
 
-    vector<vector<float>> output = linear.forward(input);
+    const float mse_loss = mse.forward(Y, Y_hat);
 
-    printMatrix(output);
+    cout << "MSE Loss: " << mse_loss << endl;
 
     return 0;
 }
