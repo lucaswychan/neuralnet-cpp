@@ -1,7 +1,6 @@
 #include <iostream>
 #include <vector>
 #include "modules/layers/linear.hpp"
-#include "utils/matrix_utils.hpp"
 #include "modules/losses/mse.hpp"
 using namespace nn;
 
@@ -9,6 +8,10 @@ int main() {
     const bool bias = true;
 
     Linear linear_1(3, 5, bias);
+
+    cout << "Before initialization: " << endl;
+    printMatrix(linear_1.getWeights());
+    
     Linear linear_2(5, 2, bias);
 
     vector<vector<float>> specific_weights_1 = {
@@ -55,8 +58,8 @@ int main() {
 
     cout << endl;
 
-    vector<vector<float>> output_1 = linear_1.forward(input);
-    vector<vector<float>> Y = linear_2.forward(output_1);
+    vector<vector<float>> output_1 = linear_1(input);
+    vector<vector<float>> Y = linear_2(output_1);
 
     printMatrix(Y);
 
@@ -72,6 +75,10 @@ int main() {
     MSE mse;
 
     const float mse_loss = mse.forward(Y, Y_hat);
+
+    vector<vector<float>> dL_dZ = mse.backward();
+    vector<vector<float>> dL_dY = linear_2.backward(dL_dZ);
+    vector<vector<float>> dL_dX = linear_1.backward(dL_dY);
 
     cout << "MSE Loss: " << mse_loss << endl;
 
