@@ -13,6 +13,7 @@ include_directories(
     include/core
     include/modules/layers
     include/modules/activations
+    include/modules/losses
     include/utils
 )
 
@@ -28,6 +29,7 @@ set(SOURCE_FILES
     # src/modules/activations/tanh.cpp
     # src/utils/matrix.cpp
     src/utils/matrix_utils.cpp
+    src/modules/losses/mse.cpp
 )
 
 # Link the source files to the executable
