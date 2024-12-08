@@ -2,7 +2,7 @@
 #include <vector>
 #include "modules/layers/linear.hpp"
 #include "modules/losses/mse.hpp"
-#include "tensors/one_dim_tensor.hpp"
+#include "core/tensor.hpp"
 using namespace nn;
 
 int main() {
@@ -83,11 +83,28 @@ int main() {
 
     // cout << "MSE Loss: " << mse_loss << endl;
 
-    OneDimTensor<float> tensor_1 = vector<float>({1.0, 2.0, 3.0, 4.0, 5.0});
-    OneDimTensor<float> tensor_2 = vector<float>({1.0, 2.0, 3.0, 4.0, 5.0});
+    Tensor<float> tensor_1d {1.0f, 2.0f, 3.0f, 4.0f, 5.0f};
+    Tensor<float> tensor_2d {{1.0f, 2.0f, 3.0f}, {4.0f, 5.0f, 6.0f}, {7.0f, 8.0f, 9.0f}};
 
-    tensor_1.print();
-    tensor_2.print();
+    cout << "Tensor 1D: " << endl;
+    tensor_1d.print();
+    cout << endl;
+
+    cout << "Tensor 2D: " << endl;
+    tensor_2d.print();
+    cout << endl;
+
+    Tensor<float> transposed_2d = tensor_2d.transpose();
+
+    cout << "Transposed Tensor 2D: " << endl;
+    transposed_2d.print();
+    cout << endl;
+
+    Tensor<float> mul_tensor = tensor_2d.matmul(transposed_2d);
+
+    cout << "Matrix Multiplication Result: " << endl;
+    mul_tensor.print();
+    cout << endl;
 
     return 0;
 }
