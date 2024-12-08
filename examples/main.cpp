@@ -2,85 +2,92 @@
 #include <vector>
 #include "modules/layers/linear.hpp"
 #include "modules/losses/mse.hpp"
+#include "tensors/one_dim_tensor.hpp"
 using namespace nn;
 
 int main() {
-    const bool bias = true;
+    // const bool bias = true;
 
-    Linear linear_1(3, 5, bias);
+    // Linear linear_1(3, 5, bias);
 
-    cout << "Before initialization: " << endl;
-    printMatrix(linear_1.getWeights());
+    // cout << "Before initialization: " << endl;
+    // printMatrix(linear_1.getWeights());
+
+    // Linear linear_2(5, 2, bias);
+
+    // vector<vector<float>> specific_weights_1 = {
+    //     {1.0f, 4.0f, 7.0f, 10.0f, 13.0f},
+    //     {2.0f, 5.0f, 8.0f, 11.0f, 14.0f},
+    //     {3.0f, 6.0f, 9.0f, 12.0f, 15.0f}
+    // };
+
+    // std::vector<std::vector<float>> input = {
+    //     {1.0f, 2.0f, 3.0f},
+    //     {4.0f, 5.0f, 6.0f},
+    //     {7.0f, 8.0f, 9.0f},
+    //     {10.0f, 11.0f, 12.0f}
+    // };
     
-    Linear linear_2(5, 2, bias);
+    // std::vector<std::vector<float>> specific_weights_2 = {
+    //     {1.0f, 6.0f},  // First column (original first row)
+    //     {2.0f, 7.0f},  // Second column (original first row)
+    //     {3.0f, 8.0f},  // Third column (original first row)
+    //     {4.0f, 9.0f},  // Fourth column (original first row)
+    //     {5.0f, 10.0f}  // Fifth column (original first row)
+    // };
 
-    vector<vector<float>> specific_weights_1 = {
-        {1.0f, 4.0f, 7.0f, 10.0f, 13.0f},
-        {2.0f, 5.0f, 8.0f, 11.0f, 14.0f},
-        {3.0f, 6.0f, 9.0f, 12.0f, 15.0f}
-    };
+    // std::vector<std::vector<float>> specific_bias_1 = {
+    //     {2.0f},  // First row
+    //     {4.0f},  // Second row
+    //     {6.0f},  // Third row
+    //     {8.0f},  // Fourth row
+    //     {10.0f}  // Fifth row
+    // };
 
-    std::vector<std::vector<float>> input = {
-        {1.0f, 2.0f, 3.0f},
-        {4.0f, 5.0f, 6.0f},
-        {7.0f, 8.0f, 9.0f},
-        {10.0f, 11.0f, 12.0f}
-    };
-    
-    std::vector<std::vector<float>> specific_weights_2 = {
-        {1.0f, 6.0f},  // First column (original first row)
-        {2.0f, 7.0f},  // Second column (original first row)
-        {3.0f, 8.0f},  // Third column (original first row)
-        {4.0f, 9.0f},  // Fourth column (original first row)
-        {5.0f, 10.0f}  // Fifth column (original first row)
-    };
+    // std::vector<std::vector<float>> specific_bias_2 = {
+    //     {3.0f},  // First row
+    //     {6.0f}   // Second row
+    // };
 
-    std::vector<std::vector<float>> specific_bias_1 = {
-        {2.0f},  // First row
-        {4.0f},  // Second row
-        {6.0f},  // Third row
-        {8.0f},  // Fourth row
-        {10.0f}  // Fifth row
-    };
+    // linear_1.setWeights(specific_weights_1);
+    // linear_2.setWeights(specific_weights_2);
 
-    std::vector<std::vector<float>> specific_bias_2 = {
-        {3.0f},  // First row
-        {6.0f}   // Second row
-    };
+    // linear_1.setBiases(specific_bias_1);
+    // linear_2.setBiases(specific_bias_2);
 
-    linear_1.setWeights(specific_weights_1);
-    linear_2.setWeights(specific_weights_2);
+    // printMatrix(input);
 
-    linear_1.setBiases(specific_bias_1);
-    linear_2.setBiases(specific_bias_2);
+    // cout << endl;
 
-    printMatrix(input);
+    // vector<vector<float>> output_1 = linear_1(input);
+    // vector<vector<float>> Y = linear_2(output_1);
 
-    cout << endl;
+    // printMatrix(Y);
 
-    vector<vector<float>> output_1 = linear_1(input);
-    vector<vector<float>> Y = linear_2(output_1);
+    // cout << endl;
 
-    printMatrix(Y);
+    // std::vector<std::vector<float>> Y_hat = {
+    //     {100.0f, 200.0f},   // First row
+    //     {400.0f, 500.0f},   // Second row
+    //     {700.0f, 800.0f},   // Third row
+    //     {1000.0f, 1100.0f}  // Fourth row
+    // };
 
-    cout << endl;
+    // MSE mse;
 
-    std::vector<std::vector<float>> Y_hat = {
-        {100.0f, 200.0f},   // First row
-        {400.0f, 500.0f},   // Second row
-        {700.0f, 800.0f},   // Third row
-        {1000.0f, 1100.0f}  // Fourth row
-    };
+    // const float mse_loss = mse.forward(Y, Y_hat);
 
-    MSE mse;
+    // vector<vector<float>> dL_dZ = mse.backward();
+    // vector<vector<float>> dL_dY = linear_2.backward(dL_dZ);
+    // vector<vector<float>> dL_dX = linear_1.backward(dL_dY);
 
-    const float mse_loss = mse.forward(Y, Y_hat);
+    // cout << "MSE Loss: " << mse_loss << endl;
 
-    vector<vector<float>> dL_dZ = mse.backward();
-    vector<vector<float>> dL_dY = linear_2.backward(dL_dZ);
-    vector<vector<float>> dL_dX = linear_1.backward(dL_dY);
+    OneDimTensor<float> tensor_1 = vector<float>({1.0, 2.0, 3.0, 4.0, 5.0});
+    OneDimTensor<float> tensor_2 = vector<float>({1.0, 2.0, 3.0, 4.0, 5.0});
 
-    cout << "MSE Loss: " << mse_loss << endl;
+    tensor_1.print();
+    tensor_2.print();
 
     return 0;
 }

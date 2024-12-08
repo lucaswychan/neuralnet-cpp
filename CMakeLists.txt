@@ -9,7 +9,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Add include directories
 include_directories(
-    include
+    include/
+    include/tensors
     include/core
     include/modules/layers
     include/modules/activations
@@ -22,6 +23,7 @@ add_executable(main examples/main.cpp)
 
 # Add source files
 set(SOURCE_FILES
+    src/tensors/one_dim_tensor.cpp
     src/core/module.cpp
     src/modules/layers/linear.cpp
     # src/modules/activations/relu.cpp

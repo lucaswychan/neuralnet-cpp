@@ -13,15 +13,11 @@ class Linear : public Module{
 
         void randomizeParams();
 
-        void setWeights(const vector<vector<float>>& desiredWeights) {
-            this->weights_ = desiredWeights;
-        };
-        void setBiases(const vector<vector<float>>& desiredBiases) {
-            this->biases_ = desiredBiases;
-        }
+        inline void setWeights(const vector<vector<float>>& desiredWeights) { this->weights_ = desiredWeights; };
+        inline void setBiases(const vector<vector<float>>& desiredBiases) { this->biases_ = desiredBiases; }
 
-        const vector<vector<float>>& getWeights() { return this->weights_; }
-        const vector<vector<float>>& getBiases() { return this->biases_; }
+        inline const vector<vector<float>>& getWeights() const { return this->weights_; }
+        inline const vector<vector<float>>& getBiases() const { return this->biases_; }
 
     private:
         int in_features_;
