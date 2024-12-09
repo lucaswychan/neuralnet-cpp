@@ -17,13 +17,17 @@ double CrossEntropyLoss::forward(const Tensor<>& Y, const Tensor<>& Y_hat) {
     const size_t B = Y.shapes()[0];
     const double factor = -1.0f / B;
 
+    // apply softmax to model output
     Tensor<> softmax_Y_hat = Softmax().forward(Y_hat);
     this->softmax_Y_hat_cache_ = softmax_Y_hat;
 
+    // log(softmax(Y_hat_{ij}))
     Tensor<> logit = softmax_Y_hat.map([](double x) { return log(x); });
 
+    // Y_{ij} * log(softmax(Y_hat_{ij}))
     logit *= Y;
 
+    // sum up all the elements
     double loss_without_factor = logit.sum();
 
     return loss_without_factor * factor;
