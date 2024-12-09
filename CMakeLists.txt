@@ -27,6 +27,7 @@ set(SOURCE_FILES
     src/modules/losses/mse.cpp
     src/modules/activations/relu.cpp
     src/modules/activations/softmax.cpp
+    src/modules/losses/cross_entropy.cpp
     src/utils/matrix_utils.cpp
 )
 
