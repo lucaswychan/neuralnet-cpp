@@ -1,16 +1,13 @@
 #pragma once
-#include "module.hpp"
+#include "loss.hpp"
 
 namespace nn {
-    class MSE {
-        public:
-            MSE();
-            float forward(const Tensor<>& Y, const Tensor<>& Y_hat);
-            Tensor<> backward();
-        
-        private:
-            Tensor<> grad_output_;
-            Tensor<> Y_cache_;
-            Tensor<> Y_hat_cache_;
+
+class MSE : public Loss{
+    public:
+        MSE();
+        virtual double forward(const Tensor<>& Y, const Tensor<>& Y_hat) override;
+        virtual Tensor<> backward() override;
     };
+
 }

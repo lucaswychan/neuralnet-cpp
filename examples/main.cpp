@@ -1,6 +1,7 @@
 #include <iostream>
 #include "modules/layers/linear.hpp"
 #include "modules/losses/mse.hpp"
+#include "modules/activations/softmax.hpp"
 using namespace nn;
 
 int main() {
@@ -88,15 +89,25 @@ int main() {
     Tensor<> dL_dY = linear_2.backward(dL_dZ);
     Tensor<> dL_dX = linear_1.backward(dL_dY);
 
-    cout << "MSE Loss: " << mse_loss << endl;
+    // ===================softmax=====================
 
-    Tensor<> filtered_tensor = linear_1.getWeights().filter([](double value) {
-        return value <= 10.0f;
-    });
+    Softmax softmax;
 
-    cout << "fitlered_values: " << endl;
-    filtered_tensor.print();
-    cout << endl;
+    Tensor<> X_1d = {1.0f, 2.0f, 3.0f, 4.0f, 5.0f};
+
+    Tensor<> Y_hat_softmax_1d = softmax.forward(X_1d);
+
+    Y_hat_softmax_1d.print();
+
+    Tensor<> X_2d = {
+        {1.0f, 2.0f, 3.0f},
+        {4.0f, 2.0f, 8.0f},
+        {1.0f, 8.0f, 3.0f}
+    };
+
+    Tensor<> Y_hat_softmax_2d = softmax.forward(X_2d);
+
+    Y_hat_softmax_2d.print();
 
     return 0;
 }

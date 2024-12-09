@@ -1,11 +1,15 @@
 #pragma once
-#include "module.hpp"
+#include "loss.hpp"
 
 namespace nn {
-    class CrossEntropyLoss : public Module {
-        public:
-            CrossEntropyLoss();
-            virtual vector<vector<float>> forward(const vector<vector<float>>& input) override;
-            virtual vector<vector<float>> backward(const vector<vector<float>>& grad_output) override;
+
+class CrossEntropyLoss : Loss {
+    public:
+        CrossEntropyLoss();
+        virtual double forward(const Tensor<>& Y, const Tensor<>& Y_hat) override;
+        virtual Tensor<> backward() override;
+    private:
+        Tensor<> softmax_Y_cache_;
     };
+
 }
