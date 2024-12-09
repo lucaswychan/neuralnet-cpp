@@ -13,18 +13,18 @@ class MLP : public Module {
             }
         }
 
-        virtual vector<vector<float>> forward(const vector<vector<float>>& input) override{
-            vector<vector<float>> x = input;
+        virtual Tensor<> forward(const Tensor<>& input) override{
+            Tensor<> x = input;
 
             for (Module* layer : this->layers_) {
                 x = layer->forward(x);
             }
-            
+
             return x;
         }
 
-        virtual vector<vector<float>> backward(const vector<vector<float>>& grad_output) override {
-            vector<vector<float>> grad = grad_output;
+        virtual Tensor<> backward(const Tensor<>& grad_output) override {
+            Tensor<> grad = grad_output;
 
             for (int i = this->num_layers_ - 1; i >= 0; i--) {
                 grad = this->layers_[i]->backward(grad);
