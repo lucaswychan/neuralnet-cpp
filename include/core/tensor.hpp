@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 #include <vector>
 #include <initializer_list>
@@ -41,7 +42,7 @@ class Tensor {
                     printRecursive(dim + 1, offset + i * stride);
                     if (i < this->shapes_[dim] - 1) cout << ", " << endl;
                 }
-                cout << "]" << endl;;
+                cout << "]" << endl;
             }
         }
 
@@ -348,11 +349,13 @@ class Tensor {
         }
 
         T sum() const {
+            cout << "Summing" << endl;
             T sum = static_cast<T>(0);
 
             for (size_t i = 0; i < this->size_; i++) {
                 sum += this->data_[i];
             }
+            
             return sum;
         }
 
@@ -416,6 +419,11 @@ class Tensor {
         }
 
         const Tensor<T> operator*=(const Tensor<T>& other) {
+            *this = *this * other;
+            return *this;
+        }
+
+        const Tensor<T> operator*=(const T& other) {
             *this = *this * other;
             return *this;
         }
