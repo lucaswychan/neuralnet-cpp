@@ -1,22 +1,22 @@
 #include "relu.hpp"
 using namespace nn;
 
-vector<vector<float>> ReLU::forward(const vector<vector<float>>& input) {
+Tensor<> ReLU::forward(const Tensor<>& input) {
     this->input_cache_ = input;
 
-    vector<vector<float>> output = input;
-    const int B = input.size(), N = input[0].size();
-    for (int i = 0; i < B; i++) {
-        for (int j = 0; j < N; j++) {
-            if (input[i][j] < 0) {
-                output[i][j] = 0;
+    return input.filter([](double x) { return x > 0.0f; });
+}
+
+Tensor<> ReLU::backward(const Tensor<>& grad_output) {
+    Tensor<> grad(grad_output.shapes(), 0.0f);
+
+    for (size_t i = 0; i < this->input_cache_.shapes()[0]; i++) {
+        for (size_t j = 0; j < this->input_cache_.shapes()[1]; j++) {
+            if (this->input_cache_[i, j] <= 0.0f) {
+                grad[i, j] = 0.0f;
             }
         }
     }
 
-    return output;
-}
-
-vector<vector<float>> ReLU::backward(const vector<vector<float>>& grad_output) {
-    return matrixMultiplication(this->input_cache_, grad_output);
+    return grad;
 }
