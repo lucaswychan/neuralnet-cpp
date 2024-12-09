@@ -10,7 +10,9 @@ class MLP : public Module {
 
             for (int i = 0; i < this->num_layers_  - 1; i++) {
                 this->layers_.push_back(new Linear(layer_sizes[i], layer_sizes[i + 1], true));
-                this->layers_.push_back(new ReLU());
+                if (i < this->num_layers_ - 2) {
+                    this->layers_.push_back(new ReLU());
+                }
             }
         }
 
