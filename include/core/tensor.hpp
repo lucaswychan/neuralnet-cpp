@@ -273,6 +273,21 @@ class Tensor {
             return result;
         }
 
+        // int (*func)(int, int)
+        Tensor<T> filter(bool (*func)(T)) const {
+            Tensor<T> result(this->shapes_, this->data_[0]);
+
+            for (size_t i = 0; i < this->size_; i++) {
+                if (func(this->data_[i])) {
+                    result.data_[i] = this->data_[i];
+                }
+                else {
+                    result.data_[i] = static_cast<T>(0);
+                }
+            }
+            return result;
+        }
+
         // Get a vector representing a slice (row/column/etc)
         // Slice with reference return
         template<size_t Dim>
