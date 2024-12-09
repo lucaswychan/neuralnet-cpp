@@ -2,6 +2,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <vector>
+#include "tensor.hpp"
 #include "utils/matrix_utils.hpp"
 using namespace std;
 
@@ -17,17 +18,17 @@ class Module {
 
         /**
          * Pure virtual function for forward pass computation.
-         * @param input The input data as a 2D vector.
-         * @return The output of the forward pass as a 2D vector.
+         * @param input The input data as a 2D Tensor.
+         * @return The output of the forward pass as a 2D Tensor.
          */
-        virtual vector<vector<float>> forward(const vector<vector<float>>& input) = 0;
+        virtual Tensor<> forward(const Tensor<>& input) = 0;
 
         /**
          * Pure virtual function for backward pass computation.
          * @param grad_output The gradient of the loss with respect to the output.
          * @return The gradient of the loss with respect to the input.
          */
-        virtual vector<vector<float>> backward(const vector<vector<float>>& grad_output) = 0;
+        virtual Tensor<> backward(const Tensor<>& grad_output) = 0;
 
         /**
          * Virtual function to update the parameters of the module.
@@ -37,10 +38,10 @@ class Module {
 
         /**
          * Operator overload to enable calling the module like a function.
-         * @param input The input data as a 2D vector.
-         * @return The output of the forward pass as a 2D vector.
+         * @param input The input data as a 2D Tensor.
+         * @return The output of the forward pass as a 2D Tensor.
          */
-        vector<vector<float>> operator()(const vector<vector<float>>& input) {
+        Tensor<> operator()(const Tensor<>& input) {
             return this->forward(input);
         }
     
@@ -48,7 +49,7 @@ class Module {
         /**
          * Cached input data for use in backward pass computations.
          */
-        vector<vector<float>> input_cache_;
+        Tensor<> input_cache_;
 };
 
 }

@@ -3,80 +3,92 @@
 #include <cmath>
 using namespace nn;
 
-Linear::Linear(int in_features, int out_features, bool bias) : in_features_(in_features), out_features_(out_features), bias_(bias) {
-    this->weights_ = allocateMatrix(in_features, out_features);
+Linear::Linear(size_t in_features, size_t out_features, bool bias) : in_features_(in_features), out_features_(out_features), bias_(bias) {
+    this->weights_ = Tensor<>({in_features, out_features}, 0.0f);
     
     if (bias) {
-        this->biases_ = allocateMatrix(out_features, 1);
+        this->biases_ = Tensor<>({out_features, 1}, 0.0f);
     }
     else {
-        this->biases_ = vector<vector<float>>();
+        this->biases_ = Tensor<>();
     }
 
     // randomize the weights. The bias is originally 0.
     this->randomizeParams();
 
-    this->grad_weights_ = allocateMatrix(in_features, out_features);
-    this->grad_biases_ = allocateMatrix(out_features, 1);
+    this->grad_weights_ = Tensor<>({in_features, out_features}, 0.0f);;
+    this->grad_biases_ = Tensor<>({out_features, 1}, 0.0f);
 
-    this->input_cache_ = vector<vector<float>>();
+    this->input_cache_ = Tensor<>();
 }
 
-vector<vector<float>> Linear::forward(const vector<vector<float>>& input) {
+Tensor<> Linear::forward(const Tensor<>& input) {
     this->input_cache_ = input;
-    int batchSize = input.size();
-    const vector<vector<float>>& XW = matrixMultiplication(input, this->weights_);
+    size_t batchSize = input.shapes()[0];
+
+    const Tensor<>& XW = input.matmul(this->weights_);
 
     if (!this->bias_) {
         return XW;
     }
 
-    vector<vector<float>> biases_repeated = allocateMatrix(batchSize, this->out_features_);
-    for (int i = 0; i < batchSize; i++) {
-        for (int j = 0; j < this->out_features_; j++) {
-            biases_repeated[i][j] = this->biases_[j][0];
+    Tensor<> biases_repeated = Tensor<>({batchSize, this->out_features_}, 0.0f);
+
+    for (size_t i = 0; i < batchSize; i++) {
+        for (size_t j = 0; j < this->out_features_; j++) {
+            biases_repeated[i, j] = this->biases_[j, 0];
         }
     }
 
-    return matrixAddition(XW, biases_repeated);
+    cout << "biases_repeated: " << endl;
+    biases_repeated.print();
+    cout << endl;
+
+    cout << "XW" << endl;
+    XW.print();
+    cout << endl;
+
+    return XW + biases_repeated;
 }
 
-vector<vector<float>> Linear::backward(const vector<vector<float>>& grad_output) {
+Tensor<> Linear::backward(const Tensor<>& grad_output) {
     // grad_output = dL/dY
 
     // dL/dW = X^T * dL/dY
-    this->grad_weights_ = matrixMultiplication(matrixTranspose(this->input_cache_), grad_output);
+    this->grad_weights_ = this->input_cache_.transpose().matmul(grad_output);
 
     // dL/dX = dL/dY * W^T
-    vector<vector<float>> grad_input = matrixMultiplication(grad_output, matrixTranspose(this->weights_));
+    Tensor<> grad_input = grad_output.matmul(this->weights_.transpose());
 
     cout << "dL/dW: " << endl;
-    printMatrix(this->grad_weights_);
+    this->grad_weights_.print();
     cout << endl;
 
     // dL/db = dL/dY^T * 1_B (1_B is a vector of ones of size batchSize)
     // dL/db = dL/dY.sum(axis=0)
     if (this->bias_) 
-        this->grad_biases_ = matrixMultiplication(matrixTranspose(grad_output), allocateMatrix(grad_output.size(), 1, 1.0f));
+        this->grad_biases_ = grad_output.transpose().matmul(Tensor<>({grad_output.shapes()[0], 1}, 1.0f));
 
     cout << "dL/db: " << endl;
-    printMatrix(this->grad_biases_);
+    this->grad_biases_.print();
     cout << endl;
 
     return grad_input;
 }
 
 void Linear::update_params(const float lr) {
-    for (int i = 0; i < this->weights_.size(); i++) {
-        for (int j = 0; j < this->weights_[i].size(); j++) {
-            this->weights_[i][j] -= lr * this->grad_weights_[i][j];
+    const size_t n = this->weights_.shapes()[0], m = this->weights_.shapes()[1];
+
+    for (size_t i = 0; i < n; i++) {
+        for (size_t j = 0; j < m; j++) {
+            this->weights_[i, j] -= lr * this->grad_weights_[i, j];
         }
     }
 
-    for (int i = 0; i < this->biases_.size(); i++) {
-        for (int j = 0; j < this->biases_[i].size(); j++) {
-            this->biases_[i][j] -= lr * this->grad_biases_[i][j];
-        }
+    const size_t k = this->biases_.shapes()[0];
+
+    for (size_t i = 0; i < k; i++) {
+        this->biases_[i, 0] -= lr * this->grad_biases_[i, 0];
     }
 
     return;
@@ -92,9 +104,9 @@ void Linear::randomizeParams() {
     uniform_real_distribution<float> dis(-limit, limit);
 
     // Xavier initialization
-    for (int i = 0; i < this->in_features_; i++) {
-        for (int j = 0; j < this->out_features_; j++) {
-            this->weights_[i][j] = dis(gen);
+    for (size_t i = 0; i < this->in_features_; i++) {
+        for (size_t j = 0; j < this->out_features_; j++) {
+            this->weights_[i, j] = dis(gen);
         }
     }
 }

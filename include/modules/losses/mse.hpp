@@ -5,12 +5,12 @@ namespace nn {
     class MSE {
         public:
             MSE();
-            float forward(const vector<vector<float>>& Y, const vector<vector<float>>& Y_hat);
-            vector<vector<float>> backward();
+            float forward(const Tensor<>& Y, const Tensor<>& Y_hat);
+            Tensor<> backward();
         
         private:
-            vector<vector<float>> grad_output_;
-            vector<vector<float>> Y_cache_;
-            vector<vector<float>> Y_hat_cache_;
+            Tensor<> grad_output_;
+            Tensor<> Y_cache_;
+            Tensor<> Y_hat_cache_;
     };
 }
