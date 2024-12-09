@@ -5,7 +5,7 @@ namespace nn {
 class ReLU : public Module {
     public:
         ReLU();
-        virtual vector<vector<float>> forward(const vector<vector<float>>& input) override;
-        virtual vector<vector<float>> backward(const vector<vector<float>>& grad_output) override;
+        virtual Tensor<> forward(const Tensor<>& input) override;
+        virtual Tensor<> backward(const Tensor<>& grad_output) override;
     };
 }
