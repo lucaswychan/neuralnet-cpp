@@ -3,7 +3,8 @@
 #include <initializer_list>
 using namespace std;
 
-template <typename T>
+
+template <typename T = double>
 class Tensor {
     private:
         vector<size_t> shapes_;
@@ -38,7 +39,7 @@ class Tensor {
                     printRecursive(dim + 1, offset + i * stride);
                     if (i < this->shapes_[dim] - 1) cout << ", " << endl;
                 }
-                cout << "]";
+                cout << "]" << endl;;
             }
         }
 
@@ -64,7 +65,7 @@ class Tensor {
                 , size_(size) {}
             
             U& operator[](size_t idx) {
-                if (idx >= this->size_) throw out_of_range("Index out of bounds");
+                if (idx >= this->size_) throw out_of_range("TensorView: Index out of bounds");
                 
                 vector<size_t> full_indices = this->indices_;
                 size_t remaining = idx;
@@ -141,7 +142,8 @@ class Tensor {
             for (const size_t& s : shape) {
                 this->size_ *= s;
             }
-            this->data_ = vector<T>(this->size_, value);
+
+            this->data_.resize(this->size_, value);
         }
 
         Tensor(const Tensor<T>& other) {
@@ -150,8 +152,6 @@ class Tensor {
         }
 
         Tensor<T> add(const Tensor& other) const {
-            if (this == &other) return *this;
-
             if (other.shapes_ != this->shapes_) {
                 throw runtime_error("Shape mismatch");
             }
@@ -166,8 +166,6 @@ class Tensor {
         }
 
         Tensor<T> sub(const Tensor<T>& other) const {
-            if (this == &other) return *this;
-
             if (other.shapes_ != this->shapes_) {
                 throw runtime_error("Shape mismatch");
             }
@@ -182,8 +180,6 @@ class Tensor {
         }
 
         Tensor<T> mul(const Tensor<T>& other) const {
-            if (this == &other) return *this;
-
             if (other.shapes_ != this->shapes_) {
                 throw runtime_error("Shape mismatch");
             }
@@ -209,8 +205,6 @@ class Tensor {
         }
 
         Tensor<T> matmul(const Tensor<T>& other) const {
-            if (this == &other) return *this;
-
             // this->data_ R^n x m, other.data_ R^m x p
             const size_t n = this->shapes_[0], m = this->shapes_[1], p = other.shapes_[1];
 
@@ -225,9 +219,11 @@ class Tensor {
 
             for (size_t i = 0; i < n; i++) {
                 for (size_t j = 0; j < p; j++) {
+                    float sum = 0.0f;
                     for (size_t k = 0; k < m; k++) {
-                        result.data_[i * p + j] += this->data_[i * n + k] * other.data_[k * p + j];;
+                        sum += this->data_[i * m + k] * other.data_[k * p + j];
                     }
+                    result[i, j] = static_cast<T>(sum);
                 }
             }
             
@@ -315,6 +311,8 @@ class Tensor {
             return this->shapes_.size();
         }
 
+        inline const vector<size_t>& shapes() const { return this->shapes_; }
+
         inline void print() const { printRecursive(0, 0); }
 
         // operators overloading
@@ -324,16 +322,34 @@ class Tensor {
         inline Tensor<T> operator*(const T& scaler) const { return this->mul(scaler); }
         inline Tensor<T>& operator=(const Tensor<T>& other) { return this->assign(other); }
 
+        const Tensor<T> operator+=(const Tensor<T>& other) { 
+            *this = *this + other;
+            return *this;
+        }
+
+        const Tensor<T> operator-=(const Tensor<T>& other) {
+            *this = *this - other;
+            return *this;
+        }
+
+        const Tensor<T> operator*=(const Tensor<T>& other) {
+            *this = *this * other;
+            return *this;
+        }
+
         // lvalue operator overloading
         template<typename... Indices>
-        T& operator[](Indices... indices) { 
+        T& operator[](Indices... indices) {
+            // ((cout << ',' << std::forward<Indices>(indices)), ...);
+            // cout << endl;
+
             // Convert variadic arguments to vector
-            vector<size_t> idxs(indices...);
+            vector<size_t> idxs({static_cast<size_t>(indices)...});
 
             // Check bounds
-            for (const int& idx : idxs) {
-                if (idx < 0 || idx >= this->shapes_[idxs.size()]) {
-                    throw out_of_range("Index out of bounds");
+            for (size_t i = 0; i < idxs.size(); ++i) {
+                if (idxs[i] < 0 || idxs[i] >= this->shapes_[i]) {
+                    throw out_of_range("Tensor: Index out of bounds");
                 }
             }
 
