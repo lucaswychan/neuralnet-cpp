@@ -25,10 +25,9 @@ set(SOURCE_FILES
     src/core/module.cpp
     src/modules/layers/linear.cpp
     src/modules/losses/mse.cpp
-    # src/modules/activations/relu.cpp
+    src/modules/activations/relu.cpp
     # src/modules/activations/sigmoid.cpp
     # src/modules/activations/tanh.cpp
-    # src/utils/matrix.cpp
     src/utils/matrix_utils.cpp
 )
 

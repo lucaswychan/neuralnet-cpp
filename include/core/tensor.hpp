@@ -7,10 +7,11 @@ using namespace std;
 template <typename T = double>
 class Tensor {
     private:
-        vector<size_t> shapes_;
-        size_t size_;
+        vector<size_t> shapes_; // store the dimensions of the tensor
+        size_t size_; // store the number of elements in the tensor
         vector<T> data_; // data is stored as a 1D vector
 
+        // Helper function to calculate the index in the 1D vector for a given set of indices expressed in the form of N-D vector
         size_t calculateIndex(const vector<size_t>& idxs) const {
             size_t index = 0;
             size_t multiplier = 1;
@@ -21,6 +22,7 @@ class Tensor {
             return index;
         }
 
+        // Helper function for printing since we don't know the number of dimensions
         void printRecursive(size_t dim, size_t offset) const {
             if (dim == this->ndim() - 1) { // Last dimension
                 cout << "[";
@@ -43,7 +45,23 @@ class Tensor {
             }
         }
 
-        // Declare friendship
+        // Helper function for operator[] overloading
+        template<typename... Indices>
+        const vector<size_t> getIdxs(Indices... indices) const {
+            // Convert variadic arguments to vector
+            vector<size_t> idxs({static_cast<size_t>(indices)...});
+
+            // Check bounds
+            for (size_t i = 0; i < idxs.size(); ++i) {
+                if (idxs[i] < 0 || idxs[i] >= this->shapes_[i]) {
+                    throw out_of_range("Tensor: Index out of bounds");
+                }
+            }
+
+            return idxs;
+        }
+
+        // Declare friendship so that TensorView can access private members of Tensor
         template<typename U>
         friend class TensorView;
 
@@ -57,6 +75,7 @@ class Tensor {
             size_t size_;
             
         public:
+            // Constructor
             TensorView(Tensor<U>& tensor, const vector<size_t>& indices, const vector<size_t>& strides, size_t slice_dim, size_t size)
                 : tensor_(tensor)
                 , indices_(indices)
@@ -64,6 +83,7 @@ class Tensor {
                 , slice_dim_(slice_dim)
                 , size_(size) {}
             
+            // Indexing operator
             U& operator[](size_t idx) {
                 if (idx >= this->size_) throw out_of_range("TensorView: Index out of bounds");
                 
@@ -98,18 +118,22 @@ class Tensor {
     public:
         Tensor() = default;
 
-        // Scaler
+        // Scaler constructor
         Tensor(const T& value) {
             this->shapes_ = vector<size_t>(1, 1);
             this->data_ = vector<T>(1, value);
         }
 
-        // 1D tensor
+        // 1D tensor constructor
         Tensor(const initializer_list<T>& data) : size_(data.size()), data_(data.begin(), data.end()) {
             this->shapes_ = vector<size_t>(1, data.size());
         }
 
-        // 2D tensor
+        Tensor(const vector<T>& data) : size_(data.size()), data_(data.begin(), data.end()) {
+            this->shapes_ = vector<size_t>(1, data.size());
+        }
+
+        // 2D tensor constructor
         Tensor(const initializer_list<initializer_list<T>>& data_2d) {
             const size_t n = data_2d.size(), m = data_2d.begin()->size();
             this->size_ = n * m;
@@ -121,7 +145,18 @@ class Tensor {
             }
         }
 
-        // 3D tensor
+        Tensor(const vector<vector<T>>& data_2d) {
+            const size_t n = data_2d.size(), m = data_2d.begin()->size();
+            this->size_ = n * m;
+
+            this->shapes_ = vector<size_t> { n, m };
+
+            for (const vector<T>& row : data_2d) {
+                this->data_.insert(this->data_.end(), row.begin(), row.end());
+            }
+        }
+
+        // 3D tensor constructor
         Tensor(const initializer_list<initializer_list<initializer_list<T>>>& data_3d) {
             const size_t n = data_3d.size(), m = data_3d.begin()->size(), l = data_3d.begin()->begin()->size();
             this->size_ = n * m * l;
@@ -135,7 +170,20 @@ class Tensor {
             }
         }
 
-        // certin value initializer
+        Tensor(const vector<vector<vector<T>>>& data_3d) {
+            const size_t n = data_3d.size(), m = data_3d.begin()->size(), l = data_3d.begin()->begin()->size();
+            this->size_ = n * m * l;
+
+            this->shapes_ = vector<size_t> { n, m, l };
+
+            for (const vector<vector<T>>& matrix : data_3d) {
+                for (const vector<T>& row : matrix) {
+                    this->data_.insert(this->data_.end(), row.begin(), row.end());
+                }
+            }
+        }
+
+        // certin value constructor
         Tensor(const vector<size_t>& shape, const T& value) {
             this->shapes_ = shape;
             this->size_ = 1;
@@ -146,18 +194,19 @@ class Tensor {
             this->data_.resize(this->size_, value);
         }
 
+        // copy constructor
         Tensor(const Tensor<T>& other) {
             // already overloading operator=
             *this = other;
         }
 
+        // Add two tensors with same shape, element-wise
         Tensor<T> add(const Tensor& other) const {
             if (other.shapes_ != this->shapes_) {
                 throw runtime_error("Shape mismatch");
             }
 
-            // default initialization (the default parameter is the first element of the other tensor)
-            Tensor<T> result(this->shapes_, other.data_[0]);
+            Tensor<T> result(this->shapes_, static_cast<T>(0));
 
             for (size_t i = 0; i < this->size_; i++) {
                 result.data_[i] = this->data_[i] + other.data_[i];
@@ -165,13 +214,13 @@ class Tensor {
             return result;
         }
 
+        // Subtract two tensors with same shape, element-wise
         Tensor<T> sub(const Tensor<T>& other) const {
             if (other.shapes_ != this->shapes_) {
                 throw runtime_error("Shape mismatch");
             }
 
-            // default initialization (the default parameter is the first element of the other tensor)
-            Tensor<T> result(this->shapes_, other.data_[0]);
+            Tensor<T> result(this->shapes_, static_cast<T>(0));
 
             for (size_t i = 0; i < this->size_; i++) {
                 result.data_[i] = this->data_[i] - other.data_[i];
@@ -179,13 +228,13 @@ class Tensor {
             return result;
         }
 
+        // Multiply two tensors with same shape, element-wise
         Tensor<T> mul(const Tensor<T>& other) const {
             if (other.shapes_ != this->shapes_) {
                 throw runtime_error("Shape mismatch");
             }
 
-            // default initialization (the default parameter is the first element of the other tensor)
-            Tensor<T> result(this->shapes_, other.data_[0]);
+            Tensor<T> result(this->shapes_, static_cast<T>(0));
 
             for (size_t i = 0; i < this->size_; i++) {
                 result.data_[i] = this->data_[i] * other.data_[i];
@@ -193,10 +242,9 @@ class Tensor {
             return result;
         }
 
-        // scaler multiplication
+        // Multiply all elements of tensor with the given scaler
         Tensor<T> mul(const T& scaler) const {
-            // default initialization (the default parameter is the first element of this tensor)
-            Tensor<T> result(this->shapes_, this->data_[0]);
+            Tensor<T> result(this->shapes_, static_cast<T>(0));
 
             for (size_t i = 0; i < this->size_; i++) {
                 result.data_[i] = this->data_[i] * scaler;
@@ -204,6 +252,7 @@ class Tensor {
             return result;
         }
 
+        // Matrix multiplication. Currently only support 2D tensors.
         Tensor<T> matmul(const Tensor<T>& other) const {
             // this->data_ R^n x m, other.data_ R^m x p
             const size_t n = this->shapes_[0], m = this->shapes_[1], p = other.shapes_[1];
@@ -215,7 +264,7 @@ class Tensor {
                 throw runtime_error("Only 2D tensors are supported for matrix multiplication");
             }
 
-            Tensor<T> result({ n, p }, other.data_[0]);
+            Tensor<T> result({ n, p }, static_cast<T>(0));
 
             for (size_t i = 0; i < n; i++) {
                 for (size_t j = 0; j < p; j++) {
@@ -230,6 +279,7 @@ class Tensor {
             return result;
         }
 
+        // Transpose. Currently only support 1D and 2D tensors
         Tensor<T> transpose() const {
             if (this->ndim() > 2) {
                 throw runtime_error("Only 1D and 2D tensors are supported for transpose");
@@ -239,7 +289,7 @@ class Tensor {
             const size_t n = (this->ndim() == 2)? this->shapes_[0] : 1;
             const size_t m = (this->ndim() == 2)? this->shapes_[1] : this->shapes_[0];
 
-            Tensor result({m, n}, this->data_[0]);
+            Tensor result({m, n}, static_cast<T>(0));
 
             for (size_t i = 0; i < n; ++i) {
                 for (size_t j = 0; j < m; ++j) {
@@ -249,12 +299,14 @@ class Tensor {
             return result;
         }
 
+        // Flatten the tensor
         Tensor<T> flatten() const {
             this->shapes_ = vector<size_t> { 1, this->size_ };
             return *this;
         }
         
 
+        // Assign this tensor with other tensor. Exactly the same as copy constructor
         Tensor<T>& assign(const Tensor<T>& other) {
             if (this == &other) return *this;
 
@@ -264,13 +316,44 @@ class Tensor {
             return *this;
         }
 
+        // Get the absolute value of each element
         Tensor<T> abs() const {
-            Tensor<T> result(this->shapes_, this->data_[0]);
+            Tensor<T> result(this->shapes_, static_cast<T>(0));
 
             for (size_t i = 0; i < this->size_; i++) {
                 result.data_[i] = std::abs(this->data_[i]);
             }
             return result;
+        }
+
+        // Perform filtering with function condition
+        Tensor<T> filter(bool (*func)(T)) const {
+            Tensor<T> result(this->shapes_, static_cast<T>(0));
+
+            for (size_t i = 0; i < this->size_; i++) {
+                if (func(this->data_[i])) {
+                    result.data_[i] = this->data_[i];
+                }
+            }
+            return result;
+        }
+
+        Tensor<T> map(T (*func)(T)) const {
+            Tensor<T> result(this->shapes_, static_cast<T>(0));
+
+            for (size_t i = 0; i < this->size_; i++) {
+                result.data_[i] = func(this->data_[i]);
+            }
+            return result;
+        }
+
+        T sum() const {
+            T sum = static_cast<T>(0);
+
+            for (size_t i = 0; i < this->size_; i++) {
+                sum += this->data_[i];
+            }
+            return sum;
         }
 
         // Get a vector representing a slice (row/column/etc)
@@ -315,7 +398,7 @@ class Tensor {
 
         inline void print() const { printRecursive(0, 0); }
 
-        // operators overloading
+        // ========================================operators overloading========================================
         inline Tensor<T> operator+(const Tensor<T>& other) const { return this->add(other); }
         inline Tensor<T> operator-(const Tensor<T>& other) const { return this->sub(other); }
         inline Tensor<T> operator*(const Tensor<T>& other) const { return this->mul(other); }
@@ -343,18 +426,14 @@ class Tensor {
             // ((cout << ',' << std::forward<Indices>(indices)), ...);
             // cout << endl;
 
-            // Convert variadic arguments to vector
-            vector<size_t> idxs({static_cast<size_t>(indices)...});
-
-            // Check bounds
-            for (size_t i = 0; i < idxs.size(); ++i) {
-                if (idxs[i] < 0 || idxs[i] >= this->shapes_[i]) {
-                    throw out_of_range("Tensor: Index out of bounds");
-                }
-            }
-
+            vector<size_t> idxs = this->getIdxs(indices...);
             return this->data_[calculateIndex(idxs)]; 
         }
 
-        
+        // rvalue operator overloading
+        template<typename... Indices>
+        T operator[](Indices... indices) const {
+            vector<size_t> idxs = this->getIdxs(indices...);
+            return this->data_[calculateIndex(idxs)]; 
+        }
 };

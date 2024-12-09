@@ -90,13 +90,5 @@ int main() {
 
     cout << "MSE Loss: " << mse_loss << endl;
 
-    Tensor<> filtered_tensor = linear_1.getWeights().filter([](double value) {
-        return value <= 10.0f;
-    });
-
-    cout << "fitlered_values: " << endl;
-    filtered_tensor.print();
-    cout << endl;
-
     return 0;
 }
