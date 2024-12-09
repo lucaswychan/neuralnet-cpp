@@ -1,15 +1,15 @@
 #include "tensor.hpp"
 
 int main() {
-    Tensor<float> tensor_1d {1.0f, 2.0f, 3.0f, 4.0f, 5.0f};
-    Tensor<float> tensor_2d {{1.0f, 2.0f, 3.0f}, {4.0f, 5.0f, 6.0f}, {7.0f, 8.0f, 9.0f}};
-    Tensor<float> tensor_3d {{{1.0f, 2.0f, 3.0f}, {4.0f, 5.0f, 6.0f}, {7.0f, 8.0f, 9.0f}}, {{10.0f, 11.0f, 12.0f}, {13.0f, 14.0f, 15.0f}, {16.0f, 17.0f, 18.0f}}};
+    Tensor<> tensor_1d {1.0f, 2.0f, 3.0f, 4.0f, 5.0f};
+    Tensor<> tensor_2d {{1.0f, 2.0f, 3.0f}, {4.0f, 5.0f, 6.0f}, {7.0f, 8.0f, 9.0f}};
+    Tensor<> tensor_3d {{{1.0f, 2.0f, 3.0f}, {4.0f, 5.0f, 6.0f}, {7.0f, 8.0f, 9.0f}}, {{10.0f, 11.0f, 12.0f}, {13.0f, 14.0f, 15.0f}, {16.0f, 17.0f, 18.0f}}};
 
     Tensor<> tensor_random({2, 4}, -2.0f);
 
-    Tensor<float> tensor_negative {{-1.1f, -2.1f, -3.1f}, {-4.0f, -5.0f, -6.0f}, {-7.0f, -8.0f, -9.0f}};
+    Tensor<> tensor_negative {{-1.1f, -2.1f, -3.1f}, {-4.0f, -5.0f, -6.0f}, {-7.0f, -8.0f, -9.0f}};
 
-    Tensor<float> copy_tensor_2d = tensor_2d;
+    Tensor<> copy_tensor_2d = tensor_2d;
 
     cout << "Tensor 1D: " << endl;
     tensor_1d.print();
@@ -27,25 +27,25 @@ int main() {
     tensor_random.print();
     cout << endl;
 
-    Tensor<float> transposed_2d = tensor_2d.transpose();
+    Tensor<> transposed_2d = tensor_2d.transpose();
 
     cout << "Transposed Tensor 2D: " << endl;
     transposed_2d.print();
     cout << endl;
 
-    Tensor<float> transposed_1d = tensor_1d.transpose();
+    Tensor<> transposed_1d = tensor_1d.transpose();
 
     cout << "Transposed Tensor 1D: " << endl;
     transposed_1d.print();
     cout << endl;
 
-    Tensor<float> mat_mul_tensor = tensor_2d.matmul(transposed_2d);
+    Tensor<> mat_mul_tensor = tensor_2d.matmul(transposed_2d);
 
     cout << "Matrix Multiplication Result: " << endl;
     mat_mul_tensor.print();
     cout << endl;
 
-    Tensor<float> mul_tensor_vector = tensor_2d * transposed_2d;
+    Tensor<> mul_tensor_vector = tensor_2d * transposed_2d;
 
     cout << "Vector Multiplication Result: " << endl;
     mul_tensor_vector.print();
@@ -80,7 +80,7 @@ int main() {
     tensor_3d.print();
     cout << endl;
 
-    Tensor<float> tensor_positive = tensor_negative.abs();
+    Tensor<> tensor_positive = tensor_negative.abs();
 
     cout << "Positive Tensor: " << endl;
     tensor_positive.print();
@@ -108,6 +108,13 @@ int main() {
     tensor_2d.print();
     cout << endl;
 
+    Tensor<> filtered_tensor = tensor_3d.filter([](double value) {
+        return value <= 10.0f;
+    });
+
+    cout << "fitlered_values: " << endl;
+    filtered_tensor.print();
+    cout << endl;
 
     return 0;
 }
