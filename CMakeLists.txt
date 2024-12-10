@@ -15,6 +15,7 @@ include_directories(
     include/modules/activations
     include/modules/losses
     include/utils
+    include/datasets
 )
 
 # Add the executable for the main example
@@ -29,6 +30,8 @@ set(SOURCE_FILES
     src/modules/activations/softmax.cpp
     src/modules/losses/cross_entropy.cpp
     src/utils/matrix_utils.cpp
+    examples/mlp.cpp
+    src/datasets/mnist.cpp
 )
 
 # Link the source files to the executable
