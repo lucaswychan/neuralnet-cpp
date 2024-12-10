@@ -9,6 +9,8 @@ double CrossEntropyLoss::forward(const Tensor<>& Y, const Tensor<>& Y_hat) {
     /*
     L = 1 / B \sum_{i=1}^B \sum_{j=1}^M Y_{ij} * log(softmax(Y_hat_{ij)})
 
+    R^B x M, Y R^B x M
+
     Y_{ij} is 1 if the correct label is j and 0 otherwise
     */
     this->Y_cache_ = Y;
@@ -38,6 +40,8 @@ Tensor<> CrossEntropyLoss::backward() {
     dL/dY_hat should have the same shape as Y_hat
 
     dL/dY_hat = 1/ B (softmax_Y_hat * \sum_{j=1}^M Y_{ij} - Y)
+
+    softmax_Y_hat R^B x M, Y R^B x M
     */
 
     const size_t B = this->Y_cache_.shapes()[0];

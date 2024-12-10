@@ -359,6 +359,19 @@ class Tensor {
             return sum;
         }
 
+        // template<typename changed_type>
+        // Tensor<changed_type> dtype() const {
+        //     vector<changed_type> result_vec(this->size_, static_cast<changed_type>(0));
+
+        //     for (size_t i = 0; i < this->size_; i++) {
+        //         result_vec[i] = static_cast<changed_type>(this->data_[i]);
+        //     }
+
+        //     Tensor<changed_type> result(this->shapes_, result_vec);
+
+        //     return result;
+        // }
+
         // Get a vector representing a slice (row/column/etc)
         // Slice with reference return
         template<size_t Dim>
