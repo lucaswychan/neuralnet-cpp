@@ -16,6 +16,12 @@ class MLP : public Module {
             }
         }
 
+        ~MLP() {
+            for (Module* layer : this->layers_) {
+                delete layer;
+            }
+        }
+
         virtual Tensor<> forward(const Tensor<>& input) override{
             Tensor<> x = input;
 
@@ -34,6 +40,14 @@ class MLP : public Module {
             }
 
             return grad;
+        }
+
+        virtual void update_params(const float lr) override {
+            for (Module* layer : this->layers_) {
+                layer->update_params(lr);
+            }
+
+            return;
         }
     private:
         vector<Module*> layers_;
