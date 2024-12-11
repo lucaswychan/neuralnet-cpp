@@ -4,35 +4,61 @@
 #include <string>
 #include <stdint.h>
 #include <iostream>
+#include <cmath>
+#include <tuple>
 #include "tensor.hpp"
 using namespace std;
 
+struct Batch {
+    vector<vector<double>> batchData;
+    vector<vector<int>> batchLabels;
+
+    tuple<Tensor<>, Tensor<>> toTensor();
+};
+
 class MNIST {
-    private:
-        const double MNIST_MEAN = 0.1307f;
-        const double MNIST_STD = 0.3081f;
+private:
+    const double MNIST_MEAN = 0.1307f;
+    const double MNIST_STD = 0.3081f;
+    const int MNIST_NUM_LABELS = 10;
 
-        // Function to reverse byte order (MNIST is big-endian)
-        template<typename T>
-        T reverseInt(T value) {
-            T result = 0;
-            for(size_t i = 0; i < sizeof(T); i++) {
-                result = (result << 8) | ((value >> (i * 8)) & 0xFF);
-            }
-            return result;
-        }
+    vector<vector<double>> images;
+    vector<int> labels;
 
-        // Normalize a single value using mean and std
-        double normalize(double value) {
-            // First scale to [0,1], then apply normalization
-            double scaled = value / 255.0f;
-            return (scaled - MNIST_MEAN) / MNIST_STD;
-        }
+    size_t currentBatchIndex = 0;
+    size_t batchSize;
+    size_t numBatches;
 
-    public:
-        Tensor<> readImages(const string& path);
-        Tensor<int> readLabels(const string& path);
+    template<typename T>
+    T reverseInt(T value);
+    double normalize(double value);
 
-        vector<Tensor<>> sampleBatchImages(const Tensor<>& images, const size_t batch_size);
-        vector<Tensor<int>> sampleBatchLabels(const Tensor<int>& labels, const size_t batch_size);
+    bool readImages(const string& path);
+    bool readLabels(const string& path);
+
+    vector<int> oneHotEncoding(const int& labels);
+
+public:
+
+    MNIST(size_t batchSize = 64) : batchSize(batchSize), currentBatchIndex(0) {}
+
+    bool loadData(const string& imageFile, const string& labelFile);
+
+    // Get next batch
+    Batch getNextBatch();
+
+    // Reset batch counter
+    inline void reset() {
+        this->currentBatchIndex = 0;
+    }
+
+    // Get number of batches
+    inline size_t getNumBatches() const {
+        return this->numBatches;
+    }
+
+    // Get current batch index
+    inline size_t getCurrentBatchIndex() const {
+        return this->currentBatchIndex;
+    }
 };

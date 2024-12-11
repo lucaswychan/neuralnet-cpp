@@ -1,16 +1,65 @@
 #include "mnist.hpp"
 
-Tensor<> MNIST::readImages(const string& path) {
-    std::ifstream file(path, std::ios::binary);
-
-    if(!file.is_open()) {
-        throw runtime_error("Failed to open file: " + path);
+bool MNIST::loadData(const string& imageFile, const string& labelFile) {
+    if (!readImages(imageFile) || !readLabels(labelFile)) {
+        return false;
     }
 
-    int32_t magic;
-    int32_t numImages;
-    int32_t numRows;
-    int32_t numCols;
+    // Calculate number of batches (ceiling division)
+    this->numBatches = (this->images.size() + this->batchSize - 1) / this->batchSize;
+    
+    cout << "Dataset loaded successfully:\n";
+    cout << "Total images: " << images.size() << "\n";
+    cout << "Batch size: " << batchSize << "\n";
+    cout << "Number of batches: " << numBatches << "\n";
+    
+    return true;
+}
+
+
+Batch MNIST::getNextBatch() {
+    Batch batch;
+    size_t startIdx = currentBatchIndex * batchSize;
+    size_t endIdx = std::min(startIdx + batchSize, this->images.size());
+    size_t actualBatchSize = endIdx - startIdx;
+
+    batch.batchData.resize(actualBatchSize);
+    batch.batchLabels.resize(actualBatchSize);
+
+    // Copy data for this batch
+    for (size_t i = 0; i < actualBatchSize; i++) {
+        batch.batchData[i] = this->images[startIdx + i];
+        batch.batchLabels[i] = this->oneHotEncoding(this->labels[startIdx + i]);
+    }
+
+    // Update batch index
+    this->currentBatchIndex = (this->currentBatchIndex + 1) % this->numBatches;
+
+    return batch;
+}
+
+template<typename T>
+T MNIST::reverseInt(T value) {
+    T result = 0;
+    for(size_t i = 0; i < sizeof(T); i++) {
+        result = (result << 8) | ((value >> (i * 8)) & 0xFF);
+    }
+    return result;
+}
+
+double MNIST::normalize(double value) {
+    double scaled = value / 255.0f;
+    return (scaled - this->MNIST_MEAN) / this->MNIST_STD;
+}
+
+bool MNIST::readImages(const string& path) {
+    ifstream file(path, ios::binary);
+    if(!file.is_open()) {
+        cerr << "Failed to open file: " << path << endl;
+        return false;
+    }
+
+    int32_t magic, numImages, numRows, numCols;
 
     file.read(reinterpret_cast<char*>(&magic), sizeof(magic));
     file.read(reinterpret_cast<char*>(&numImages), sizeof(numImages));
@@ -22,64 +71,56 @@ Tensor<> MNIST::readImages(const string& path) {
     numRows = reverseInt(numRows);
     numCols = reverseInt(numCols);
 
-    vector<vector<double>> images;
-    images.resize(numImages, vector<double>(numRows * numCols));
+    this->images.resize(numImages, vector<double>(numRows * numCols));
 
-    // Read and normalize image data
     for(int i = 0; i < numImages; i++) {
         for(int j = 0; j < numRows * numCols; j++) {
             unsigned char temp = 0;
             file.read(reinterpret_cast<char*>(&temp), sizeof(temp));
-            images[i][j] = normalize(static_cast<double>(temp));
+            this->images[i][j] = normalize(static_cast<double>(temp));
         }
     }
 
-    return Tensor<>(images);
+    return true;
 }
 
-Tensor<int> MNIST::readLabels(const string& path) {
-    std::ifstream file(path, std::ios::binary);
-    
+bool MNIST::readLabels(const string& path) {
+    ifstream file(path, ios::binary);
     if(!file.is_open()) {
-        throw runtime_error("Failed to open file: " + path);
+        cerr << "Failed to open file: " << path << endl;
+        return false;
     }
 
-    int32_t magic;
-    int32_t numLabels;
+    int32_t magic, numLabels;
 
     file.read(reinterpret_cast<char*>(&magic), sizeof(magic));
     file.read(reinterpret_cast<char*>(&numLabels), sizeof(numLabels));
 
-    magic = reverseInt(magic);
-    numLabels = reverseInt(numLabels);
+    magic = this->reverseInt(magic);
+    numLabels = this->reverseInt(numLabels);
 
-    vector<int> labels;
     labels.resize(numLabels);
 
     for(int i = 0; i < numLabels; i++) {
         unsigned char temp;
         file.read(reinterpret_cast<char*>(&temp), 1);
-        labels[i] = static_cast<int>(temp); // Store as integer without normalization
+        this->labels[i] = static_cast<int>(temp);
     }
 
-    return Tensor<int>(labels);
+    return true;
 }
 
-vector<Tensor<>> MNIST::sampleBatchImages(const Tensor<>& images, const size_t batch_size) {
-    const size_t num_samples = images.shapes()[0];
-    const size_t num_batch = num_samples / batch_size;
+vector<int> MNIST::oneHotEncoding(const int& labels) {
+    vector<int> oneHotVector(this->MNIST_NUM_LABELS, 0);
+    oneHotVector[labels] = 1;
+    return oneHotVector;
+}
 
-    vector<Tensor<>> batch_images(num_batch, Tensor<>({batch_size, 784}, 0.0f));
+tuple<Tensor<>, Tensor<>> Batch::toTensor() {
+    Tensor<> data = this->batchData;
     
-    for(size_t i = 0; i < num_batch; i++) {
-        for(size_t j = 0; j < batch_size; j++) {
-            for(size_t k = 0; k < 784; k++) {
-                batch_images[i][j, k] = images[i * batch_size + j, k];
-            }
-        }
-    }
-
-    return batch_images;
+    Tensor<int> labels_int = this->batchLabels;
+    Tensor<> labels = labels_int.dtype<>();
+    
+    return make_tuple(data, labels);
 }
-
-vector<Tensor<int>> MNIST::sampleBatchLabels(const Tensor<>& labels, const size_t)
