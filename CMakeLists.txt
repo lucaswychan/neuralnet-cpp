@@ -16,6 +16,7 @@ include_directories(
     include/modules/losses
     include/utils
     include/datasets
+    include/models
 )
 
 # Add the executable for the main example
@@ -30,8 +31,9 @@ set(SOURCE_FILES
     src/modules/activations/softmax.cpp
     src/modules/losses/cross_entropy.cpp
     src/utils/matrix_utils.cpp
-    examples/mlp.cpp
+    src/utils/tensor_utils.cpp
     src/datasets/mnist.cpp
+    src/models/mlp.cpp
 )
 
 # Link the source files to the executable
