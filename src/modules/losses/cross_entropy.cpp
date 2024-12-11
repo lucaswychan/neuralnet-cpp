@@ -5,7 +5,7 @@ using namespace nn;
 
 CrossEntropyLoss::CrossEntropyLoss() {}
 
-double CrossEntropyLoss::forward(const Tensor<>& Y, const Tensor<>& Y_hat) {
+double CrossEntropyLoss::forward(const Tensor<>& Y_hat, const Tensor<>& Y) {
     /*
     L = 1 / B \sum_{i=1}^B \sum_{j=1}^M Y_{ij} * log(softmax(Y_hat_{ij)})
 
