@@ -1,4 +1,5 @@
 #include <iostream>
+#include <numeric>
 #include "mlp.hpp"
 #include "mnist.hpp"
 #include "cross_entropy.hpp"
@@ -37,7 +38,7 @@ int main() {
     for (size_t e = 0; e < EPOCH; e++) {
         cout << "\nEpoch " << e + 1 << ":\n";
         dataset.reset();  // Reset batch counter at the start of each epoch
-        loss_list.clear()
+        loss_list.clear();
         
         for (size_t i = 0; i < dataset.getNumBatches(); i++) {
             auto batch = dataset.getNextBatch();
@@ -46,7 +47,7 @@ int main() {
             Tensor<> output = model.forward(data);
             loss = criterion.forward(output, labels);
 
-            loss_list.push_back(loss)
+            loss_list.push_back(loss);
 
             Tensor<> grad = criterion.backward();
 
