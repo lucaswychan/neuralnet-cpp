@@ -1,44 +1,63 @@
 #include <iostream>
-#include "mlp.cpp"
+#include "mlp.hpp"
 #include "mnist.hpp"
 #include "cross_entropy.hpp"
 using namespace nn;
 
 int main() {
 
-    MNIST mnist_dataset;
+    // Define the hyperparameters
+
+    const double LR = 0.01;
+    const double EPOCH = 10;
+    const double BATCH_SIZE = 64;
+
+    MNIST dataset(BATCH_SIZE);
+
+    const string mnist_image_file = "../data/mnist/train-images.idx3-ubyte";
+    const string mnist_label_file = "../data/mnist/train-labels.idx1-ubyte";
 
     // load MNIST data
-    Tensor<> images = mnist_dataset.readImages("../data/mnist/train-images.idx3-ubyte");
-    Tensor<int> original_labels = mnist_dataset.readLabels("../data/mnist/train-labels.idx1-ubyte");
-
-    // convert the label to one hot vectors
-    Tensor<int> labels({original_labels.shapes()[0], 10}, 0);
-    for(int i = 0; i < original_labels.shapes()[0]; i++) {
-        labels[i, original_labels[i]] = 1;
+    if (!dataset.loadData(mnist_image_file, mnist_label_file)) {
+        cerr << "Failed to load dataset" << endl;
+        return 1;
     }
-
-    cout << "images dimensions : " << images.ndim() << endl;
-
-    cout << "images shapes : " << images.shapes()[0] << " x " << images.shapes()[1] << endl;
-    cout << "labels shapes : " << labels.shapes()[0] << " x " << labels.shapes()[1] << endl;
-
-    // Now images are normalized with mean=0.1307 and std=0.3081
-    // Each pixel value is transformed using: (x/255 - mean) / std
 
     // Initialize the model
     MLP model = MLP({784, 128, 64, 10});
 
     // Define the loss function
-    CrossEntropyLoss loss = CrossEntropyLoss();
+    CrossEntropyLoss criterion = CrossEntropyLoss();
 
-    // Define the hyperparameters
-    double learning_rate = 0.01;
-    double epoch = 10;
-    double batch_size = 64;
+    double loss = 0.0;
+    vector<double> loss_list;
 
-    // Train the model
-    for(int i = 0; i < epoch; i++) {
+    // // Train the model
+    // Example of iterating through all batches
+    for (size_t e = 0; e < EPOCH; e++) {
+        cout << "\nEpoch " << e + 1 << ":\n";
+        dataset.reset();  // Reset batch counter at the start of each epoch
+        loss_list.clear()
+        
+        for (size_t i = 0; i < dataset.getNumBatches(); i++) {
+            auto batch = dataset.getNextBatch();
+            auto [data, labels] = batch.toTensor();
+
+            Tensor<> output = model.forward(data);
+            loss = criterion.forward(output, labels);
+
+            loss_list.push_back(loss)
+
+            Tensor<> grad = criterion.backward();
+
+            model.backward(grad);
+            model.update_params(LR);
+
+            cout << "Batch " << i + 1 << " Loss: " << loss << endl;
+        }
+
+        cout << "------------------------------------" << endl;
+        cout << "Total Loss in Epoch " << e << " = " << accumulate(loss_list.begin(), loss_list.end(), 0.0) / loss_list.size() << "" << endl;
     }
 
     return 0;
