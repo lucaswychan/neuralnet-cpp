@@ -3,7 +3,7 @@ using namespace nn;
 
 MSE::MSE() {}
 
-double MSE::forward(const Tensor<>& Y, const Tensor<>& Y_hat) {
+double MSE::forward(const Tensor<>& Y_hat, const Tensor<>& Y) {
     // Y R^B x M, Y_hat R^B x M , B is the batch size and M is the output dimension
 
     // 1 / (B * M) * ||(Y - Y_hat)||^2
