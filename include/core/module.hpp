@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <vector>
 #include "tensor.hpp"
-#include "utils/matrix_utils.hpp"
 using namespace std;
 
 

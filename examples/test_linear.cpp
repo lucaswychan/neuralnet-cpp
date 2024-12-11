@@ -1,22 +1,49 @@
 #include <iostream>
 #include "modules/layers/linear.hpp"
 #include "modules/losses/mse.hpp"
+#include "modules/losses/cross_entropy.hpp"
 using namespace nn;
 
 int main() {
-    const bool bias = true;
+        const bool bias = true;
 
     Linear linear_1(3, 5, bias);
 
     cout << "Before initialization: " << endl;
     linear_1.getWeights().print();
 
-    Linear linear_2(5, 2, bias);
+    Linear linear_2(5, 7, bias);
 
     Tensor<> specific_weights_1 = {
-        {1.1f, 4.1f, 7.1f, 10.1f, 13.1f},
-        {2.1f, 5.1f, 8.1f, 11.1f, 14.1f},
-        {3.1f, 6.1f, 9.1f, 12.1f, 15.1f}
+        {0.1, 0.4, 0.7, 1.0, 1.3},
+        {0.2, 0.5, 0.8, 1.1, 1.4},
+        {0.3, 0.6, 0.9, 1.2, 1.5}
+    };
+    
+    Tensor<> specific_weights_2 = {
+        {0.1, 0.6, 1.1, 1.6, 2.1, 2.6, 3.1},
+        {0.2, 0.7, 1.2, 1.7, 2.2, 2.7, 3.2},
+        {0.3, 0.8, 1.3, 1.8, 2.3, 2.8, 3.3},
+        {0.4, 0.9, 1.4, 1.9, 2.4, 2.9, 3.4},
+        {0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5}
+    };
+
+    Tensor<> specific_bias_1 = {
+        0.1,
+        0.2,
+        0.3,
+        0.4,
+        0.5
+    };
+
+    Tensor<> specific_bias_2 = {
+        0.1,
+        0.2,
+        0.3,
+        0.4,
+        0.5,
+        0.6,
+        0.7
     };
 
     Tensor<> input = {
@@ -24,27 +51,6 @@ int main() {
         {4.1f, 5.1f, 6.1f},
         {7.1f, 8.1f, 9.1f},
         {10.1f, 11.1f, 12.1f}
-    };
-    
-    Tensor<> specific_weights_2 = {
-        {1.1f, 6.1f},  // First column (original first row)
-        {2.1f, 7.1f},  // Second column (original first row)
-        {3.1f, 8.1f},  // Third column (original first row)
-        {4.1f, 9.1f},  // Fourth column (original first row)
-        {5.1f, 10.1f}  // Fifth column (original first row)
-    };
-
-    Tensor<> specific_bias_1 = {
-        2.1f,  // First row
-        4.1f,  // Second row
-        6.1f,  // Third row
-        8.1f,  // Fourth row
-        10.1f  // Fifth row
-    };
-
-    Tensor<> specific_bias_2 = {
-        3.1f,  // First row
-        6.1f   // Second row
     };
 
     cout << "After initialization: " << endl;
@@ -67,28 +73,54 @@ int main() {
     cout << endl;
 
     Tensor<> output_1 = linear_1(input);
-    Tensor<> Y = linear_2(output_1);
+    Tensor<> Y_hat = linear_2(output_1);
 
-    Y.print();
+    cout << "Y_hat: " << endl;
+    Y_hat.print();
 
     cout << endl;
 
-    Tensor<> Y_hat = {
-        {100.1f, 200.1f},   // First row
-        {400.1f, 500.1f},   // Second row
-        {700.1f, 800.1f},   // Third row
-        {1000.1f, 1100.1f}  // Fourth row
+    Tensor<> Y = {
+        {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0},
+        {0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0},
+        {0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0},
+        {0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0}
     };
 
     MSE mse;
+    CrossEntropyLoss cross_entropy_loss;
 
     const float mse_loss = mse.forward(Y, Y_hat);
+    const float cross_entropy_loss_loss = cross_entropy_loss.forward(Y, Y_hat);
 
-    Tensor<> dL_dZ = mse.backward();
+    cout << "Cross Entropy Loss: " << cross_entropy_loss_loss << endl;
+
+    Tensor<> dL_dZ = cross_entropy_loss.backward();
     Tensor<> dL_dY = linear_2.backward(dL_dZ);
     Tensor<> dL_dX = linear_1.backward(dL_dY);
 
-    cout << "MSE Loss: " << mse_loss << endl;
+
+
+
+    // ===================softmax=====================
+
+    // Softmax softmax;
+
+    // Tensor<> X_1d = {1.0f, 2.0f, 3.0f, 4.0f, 5.0f};
+
+    // Tensor<> Y_hat_softmax_1d = softmax.forward(X_1d);
+
+    // Y_hat_softmax_1d.print();
+
+    // Tensor<> X_2d = {
+    //     {1.0f, 2.0f, 3.0f},
+    //     {4.0f, 2.0f, 8.0f},
+    //     {1.0f, 8.0f, 3.0f}
+    // };
+
+    // Tensor<> Y_hat_softmax_2d = softmax.forward(X_2d);
+
+    // Y_hat_softmax_2d.print();
 
     return 0;
 }

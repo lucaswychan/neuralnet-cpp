@@ -40,14 +40,6 @@ Tensor<> Linear::forward(const Tensor<>& input) {
         }
     }
 
-    cout << "biases_repeated: " << endl;
-    biases_repeated.print();
-    cout << endl;
-
-    cout << "XW" << endl;
-    XW.print();
-    cout << endl;
-
     return XW + biases_repeated;
 }
 
@@ -60,18 +52,10 @@ Tensor<> Linear::backward(const Tensor<>& grad_output) {
     // dL/dX = dL/dY * W^T
     Tensor<> grad_input = grad_output.matmul(this->weights_.transpose());
 
-    cout << "dL/dW: " << endl;
-    this->grad_weights_.print();
-    cout << endl;
-
     // dL/db = dL/dY^T * 1_B (1_B is a vector of ones of size batchSize)
     // dL/db = dL/dY.sum(axis=0)
     if (this->bias_) 
         this->grad_biases_ = grad_output.transpose().matmul(Tensor<>({grad_output.shapes()[0], 1}, 1.0f));
-
-    cout << "dL/db: " << endl;
-    this->grad_biases_.print();
-    cout << endl;
 
     return grad_input;
 }
@@ -79,17 +63,8 @@ Tensor<> Linear::backward(const Tensor<>& grad_output) {
 void Linear::update_params(const float lr) {
     const size_t n = this->weights_.shapes()[0], m = this->weights_.shapes()[1];
 
-    for (size_t i = 0; i < n; i++) {
-        for (size_t j = 0; j < m; j++) {
-            this->weights_[i, j] -= lr * this->grad_weights_[i, j];
-        }
-    }
-
-    const size_t k = this->biases_.shapes()[0];
-
-    for (size_t i = 0; i < k; i++) {
-        this->biases_[i, 0] -= lr * this->grad_biases_[i, 0];
-    }
+    this->weights_ -= this->grad_weights_ * lr;
+    this->biases_ -= this->grad_biases_ * lr;
 
     return;
 }

@@ -1,6 +1,8 @@
+#pragma once
 #include <iostream>
 #include <vector>
 #include <initializer_list>
+#include "tensor_utils.hpp"
 using namespace std;
 
 
@@ -41,7 +43,7 @@ class Tensor {
                     printRecursive(dim + 1, offset + i * stride);
                     if (i < this->shapes_[dim] - 1) cout << ", " << endl;
                 }
-                cout << "]" << endl;;
+                cout << "]" << endl;
             }
         }
 
@@ -62,58 +64,11 @@ class Tensor {
         }
 
         // Declare friendship so that TensorView can access private members of Tensor
+        template<typename U, typename V>
+        friend Tensor<V> dtype_impl(const Tensor<U>& tensor);
+
         template<typename U>
         friend class TensorView;
-
-        // TensorView class to provide a reference-like view into tensor data
-        template<typename U>
-        class TensorView {
-            Tensor<U>& tensor_;  // Reference to the original tensor
-            vector<size_t> indices_;
-            vector<size_t> strides_;
-            size_t slice_dim_;
-            size_t size_;
-            
-        public:
-            // Constructor
-            TensorView(Tensor<U>& tensor, const vector<size_t>& indices, const vector<size_t>& strides, size_t slice_dim, size_t size)
-                : tensor_(tensor)
-                , indices_(indices)
-                , strides_(strides)
-                , slice_dim_(slice_dim)
-                , size_(size) {}
-            
-            // Indexing operator
-            U& operator[](size_t idx) {
-                if (idx >= this->size_) throw out_of_range("TensorView: Index out of bounds");
-                
-                vector<size_t> full_indices = this->indices_;
-                size_t remaining = idx;
-                
-                // Convert linear index back to multidimensional indices
-                size_t curr_dim = 0;
-                for (size_t i = 0; i < this->tensor_.ndim(); ++i) {
-                    if (i != this->slice_dim_) {
-                        full_indices[i] = remaining / strides_[curr_dim];
-                        remaining %= this->strides_[curr_dim];
-                        ++curr_dim;
-                    }
-                }
-                
-                // Calculate final linear index in original data
-                size_t final_idx = this->tensor_.calculateIndex(full_indices);
-                
-                return this->tensor_.data_[final_idx];
-            }
-            
-            size_t size() const { return this->size_; }
-
-            // Iterator support
-            U* begin() { return &operator[](0); }
-            U* end() { return &operator[](this->size_); }
-            const U* begin() const { return &operator[](0); }
-            const U* end() const { return &operator[](this->size_); }
-        };
 
     public:
         Tensor() = default;
@@ -353,8 +308,29 @@ class Tensor {
             for (size_t i = 0; i < this->size_; i++) {
                 sum += this->data_[i];
             }
+            
             return sum;
         }
+
+        // template<typename changed_type>
+        // Tensor<changed_type> dtype() const {
+        //     vector<changed_type> result_vec(this->size_, static_cast<changed_type>(0));
+
+        //     for (size_t i = 0; i < this->size_; i++) {
+        //         result_vec[i] = static_cast<changed_type>(this->data_[i]);
+        //     }
+
+        //     Tensor<changed_type> result(this->shapes_, result_vec);
+
+        //     return result;
+        // }
+
+        // Convert tensor to different data type
+        template<typename U = double>
+        Tensor<U> dtype() const {
+            return dtype_impl<T, U>(*this);
+        }
+
 
         // Get a vector representing a slice (row/column/etc)
         // Slice with reference return
@@ -416,6 +392,11 @@ class Tensor {
         }
 
         const Tensor<T> operator*=(const Tensor<T>& other) {
+            *this = *this * other;
+            return *this;
+        }
+
+        const Tensor<T> operator*=(const T& other) {
             *this = *this * other;
             return *this;
         }

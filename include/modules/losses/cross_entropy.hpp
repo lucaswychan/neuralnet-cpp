@@ -6,10 +6,10 @@ namespace nn {
 class CrossEntropyLoss : Loss {
     public:
         CrossEntropyLoss();
-        virtual double forward(const Tensor<>& Y, const Tensor<>& Y_hat) override;
+        virtual double forward(const Tensor<>& Y_hat, const Tensor<>& Y) override;
         virtual Tensor<> backward() override;
     private:
-        Tensor<> softmax_Y_cache_;
+        Tensor<> softmax_Y_hat_cache_;
     };
 
 }

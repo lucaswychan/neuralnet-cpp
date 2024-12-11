@@ -13,9 +13,11 @@ class Linear : public Module{
 
         void randomizeParams();
 
+        // setters
         inline void setWeights(const Tensor<>& desiredWeights) { this->weights_ = desiredWeights; };
         inline void setBiases(const Tensor<>& desiredBiases) { this->biases_ = desiredBiases; }
 
+        // getters
         inline const Tensor<>& getWeights() const { return this->weights_; }
         inline const Tensor<>& getBiases() const { return this->biases_; }
 
