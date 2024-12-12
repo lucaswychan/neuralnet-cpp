@@ -41,12 +41,21 @@ public:
     inline const U* end() const { return &operator[](this->size_); }
 };
 
+// for max, min ,argmax, argmin reduction
+enum class ReduceOp {
+    MAX,
+    MIN,
+    ARGMAX,
+    ARGMIN
+};
+
 // ================================================definition================================================
 
 template<typename U, typename V>
 Tensor<V> dtype_impl(const Tensor<U>& tensor) {
     Tensor<V> result;
     result.shapes_ = tensor.shapes_;
+    result.size_ = tensor.size_;
     result.data_.resize(tensor.data_.size());
     
     std::transform(tensor.data_.begin(), tensor.data_.end(), result.data_.begin(),
