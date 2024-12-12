@@ -3,6 +3,7 @@
 #include "mlp.hpp"
 #include "mnist.hpp"
 #include "cross_entropy.hpp"
+#include "accuracy.hpp"
 using namespace nn;
 
 int main() {
@@ -31,7 +32,9 @@ int main() {
     CrossEntropyLoss criterion = CrossEntropyLoss();
 
     double loss = 0.0;
+    double acc = 0.0;
     vector<double> loss_list;
+    vector<double> accuracy_list;
 
     // // Train the model
     // Example of iterating through all batches
@@ -39,26 +42,34 @@ int main() {
         cout << "\nEpoch " << e + 1 << ":\n";
         dataset.reset();  // Reset batch counter at the start of each epoch
         loss_list.clear();
+        accuracy_list.clear();
         
         for (size_t i = 0; i < dataset.getNumBatches(); i++) {
             auto batch = dataset.getNextBatch();
             auto [data, labels] = batch.toTensor();
 
+            // forward propagation
             Tensor<> output = model.forward(data);
-            loss = criterion.forward(output, labels);
 
+            loss = criterion.forward(output, labels);
+            cout << "After loss" << endl;
+            acc = metrics::accuracy(output, labels);
+            cout << "After acc" << endl;
+
+            accuracy_list.push_back(acc);
             loss_list.push_back(loss);
 
+            // backward propagation
             Tensor<> grad = criterion.backward();
-
             model.backward(grad);
             model.update_params(LR);
 
-            cout << "Batch " << i + 1 << " Loss: " << loss << endl;
+            cout << "Batch " << i + 1 << " Loss: " << loss << " Accuracy: " << acc * 100 << "%" << endl;
         }
 
         cout << "------------------------------------" << endl;
         cout << "Total Loss in Epoch " << e << " = " << accumulate(loss_list.begin(), loss_list.end(), 0.0) / loss_list.size() << "" << endl;
+        cout << "Total Accuracy in Epoch " << e << " = " << accumulate(accuracy_list.begin(), accuracy_list.end(), 0.0) / accuracy_list.size() << "%" << endl;
     }
 
     return 0;
