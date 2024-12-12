@@ -90,19 +90,9 @@ int main() {
     copy_tensor_2d.print();
     cout << endl;
 
-    tensor_1d += tensor_1d;
-
-    cout << "tensor_1d += tensor_1d: " << endl;
-    tensor_1d.print();
-    cout << endl;
-
-    tensor_1d -= tensor_1d;
-
-    cout << "tensor_1d -= tensor_1d: " << endl;
-    tensor_1d.print();
-    cout << endl;
-
     tensor_2d += tensor_2d;
+    tensor_2d[1, 1] = 1200.14f;
+    tensor_2d[1, 0] = 1300.14f;
 
     cout << "tensor_2d += tensor_2d: " << endl;
     tensor_2d.print();
@@ -114,6 +104,26 @@ int main() {
 
     cout << "fitlered_values: " << endl;
     filtered_tensor.print();
+    cout << endl;
+
+    cout << "finding max value in tensor_2d: " << endl;
+
+    Tensor<size_t> max_tensor_2d = tensor_2d.argmin();
+
+    cout << "max_tensor_2d: " << endl;
+    max_tensor_2d.print();
+    cout << endl;
+
+    Tensor<size_t> max_tensor_1d = tensor_1d.argmin();
+
+    cout << "max_tensor_1d: " << endl;
+    max_tensor_1d.print();
+    cout << endl;
+
+    Tensor<int> equal_tensor = tensor_2d.equal(tensor_2d);
+
+    cout << "equal_tensor: " << endl;
+    equal_tensor.print();
     cout << endl;
 
     return 0;
