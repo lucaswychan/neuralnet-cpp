@@ -67,9 +67,13 @@ int main() {
             cout << "Batch " << i + 1 << " Loss: " << loss << " Accuracy: " << acc * 100 << "%" << endl;
         }
 
+        double total_loss = accumulate(loss_list.begin(), loss_list.end(), 0.0) / loss_list.size();
+        double total_acc = accumulate(accuracy_list.begin(), accuracy_list.end(), 0.0) / accuracy_list.size() * 100;
+
         cout << "------------------------------------" << endl;
-        cout << "Total Loss in Epoch " << e << " = " << accumulate(loss_list.begin(), loss_list.end(), 0.0) / loss_list.size() << "" << endl;
-        cout << "Total Accuracy in Epoch " << e << " = " << accumulate(accuracy_list.begin(), accuracy_list.end(), 0.0) / accuracy_list.size() << "%" << endl;
+        cout << "Total Loss in Epoch " << e + 1 << " = " << total_loss << "" << endl;
+        cout << "Total Accuracy in Epoch " << e + 1 << " = " << total_acc<< "%" << endl;
+        cout << "------------------------------------" << endl;
     }
 
     return 0;
