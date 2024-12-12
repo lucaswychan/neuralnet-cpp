@@ -17,6 +17,7 @@ include_directories(
     include/utils
     include/datasets
     include/models
+    include/metrics
 )
 
 # Add the executable for the main example
@@ -34,6 +35,7 @@ set(SOURCE_FILES
     src/utils/tensor_utils.cpp
     src/datasets/mnist.cpp
     src/models/mlp.cpp
+    src/metrics/accuracy.cpp
 )
 
 # Link the source files to the executable
