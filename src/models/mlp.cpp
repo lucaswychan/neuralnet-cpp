@@ -1,19 +1,21 @@
 #include "mlp.hpp"
 #include "linear.hpp"
 #include "relu.hpp"
+#include "dropout.hpp"
 
-MLP::MLP(vector<size_t> layer_sizes) {
+MLP::MLP(vector<size_t> layer_sizes, double dropout_p) {
     this->num_layers_ = layer_sizes.size();
 
     for (size_t i = 0; i < this->num_layers_  - 1; i++) {
         this->layers_.push_back(new Linear(layer_sizes[i], layer_sizes[i + 1], true));
         if (i < this->num_layers_ - 2) {
+            this->layers_.push_back(new Dropout(dropout_p));
             this->layers_.push_back(new ReLU());
         }
     }
 }
 
-MLP::MLP(initializer_list<size_t> layer_sizes) : MLP(vector<size_t>(layer_sizes)) {}
+MLP::MLP(initializer_list<size_t> layer_sizes, double dropout_p) : MLP(vector<size_t>(layer_sizes), dropout_p) {}
 
 MLP::~MLP() {
     for (Module* layer : this->layers_) {
