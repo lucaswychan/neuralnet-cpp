@@ -27,6 +27,7 @@ add_executable(main examples/main.cpp)
 set(SOURCE_FILES
     src/core/module.cpp
     src/modules/layers/linear.cpp
+    src/modules/layers/dropout.cpp
     src/modules/losses/mse.cpp
     src/modules/activations/relu.cpp
     src/modules/activations/softmax.cpp
@@ -36,6 +37,7 @@ set(SOURCE_FILES
     src/datasets/mnist.cpp
     src/models/mlp.cpp
     src/metrics/accuracy.cpp
+    src/utils/utils.cpp
 )
 
 # Link the source files to the executable
