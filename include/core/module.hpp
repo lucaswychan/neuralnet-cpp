@@ -43,12 +43,16 @@ class Module {
         Tensor<> operator()(const Tensor<>& input) {
             return this->forward(input);
         }
+
+        inline void train() { this->training = true; }
+        inline void eval() { this->training = false; }
     
     protected:
         /**
          * Cached input data for use in backward pass computations.
          */
         Tensor<> input_cache_;
+        bool training = true;
 };
 
 }
