@@ -2,17 +2,15 @@
 #include "modules/layers/linear.hpp"
 #include "modules/losses/mse.hpp"
 #include "modules/losses/cross_entropy.hpp"
+#include "dropout.hpp"
 using namespace nn;
 
 int main() {
         const bool bias = true;
 
     Linear linear_1(3, 5, bias);
-
-    cout << "Before initialization: " << endl;
-    linear_1.getWeights().print();
-
     Linear linear_2(5, 7, bias);
+    Dropout dropout(0.3);
 
     Tensor<> specific_weights_1 = {
         {0.1, 0.4, 0.7, 1.0, 1.3},
@@ -73,7 +71,8 @@ int main() {
     cout << endl;
 
     Tensor<> output_1 = linear_1(input);
-    Tensor<> Y_hat = linear_2(output_1);
+    Tensor<> output_2 = dropout(output_1);
+    Tensor<> Y_hat = linear_2(output_2);
 
     cout << "Y_hat: " << endl;
     Y_hat.print();
@@ -90,16 +89,15 @@ int main() {
     MSE mse;
     CrossEntropyLoss cross_entropy_loss;
 
-    const float mse_loss = mse.forward(Y, Y_hat);
-    const float cross_entropy_loss_loss = cross_entropy_loss.forward(Y, Y_hat);
+    const float mse_loss = mse.forward(Y_hat, Y);
+    const float cross_entropy_loss_loss = cross_entropy_loss.forward(Y_hat, Y);
 
     cout << "Cross Entropy Loss: " << cross_entropy_loss_loss << endl;
 
     Tensor<> dL_dZ = cross_entropy_loss.backward();
-    Tensor<> dL_dY = linear_2.backward(dL_dZ);
+    Tensor<> dL_dY_dot = linear_2.backward(dL_dZ);
+    Tensor<> dL_dY = dropout.backward(dL_dY_dot);
     Tensor<> dL_dX = linear_1.backward(dL_dY);
-
-
 
 
     // ===================softmax=====================
