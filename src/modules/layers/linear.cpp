@@ -44,18 +44,28 @@ Tensor<> Linear::forward(const Tensor<>& input) {
 }
 
 Tensor<> Linear::backward(const Tensor<>& grad_output) {
-    // grad_output = dL/dY
+    // dL/dY = grad_output
 
     // dL/dW = X^T * dL/dY
     this->grad_weights_ = this->input_cache_.transpose().matmul(grad_output);
 
+    // cout << "dL/dW: " << endl;
+    // this->grad_weights_.print();
+    // cout << endl;
+
     // dL/dX = dL/dY * W^T
     Tensor<> grad_input = grad_output.matmul(this->weights_.transpose());
 
-    // dL/db = dL/dY^T * 1_B (1_B is a vector of ones of size batchSize)
-    // dL/db = dL/dY.sum(axis=0)
+    /*
+    dL/db = dL/dY^T * 1_B (1_B is a vector of ones of size batchSize)
+    dL/db = dL/dY.sum(axis=0)
+    */
     if (this->bias_) 
         this->grad_biases_ = grad_output.transpose().matmul(Tensor<>({grad_output.shapes()[0], 1}, 1.0f));
+
+    // cout << "dL/db: " << endl;
+    // this->grad_biases_.print();
+    // cout << endl;
 
     return grad_input;
 }
