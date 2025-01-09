@@ -158,7 +158,7 @@ class Tensor {
         // Add two tensors with same shape, element-wise
         Tensor<T> add(const Tensor& other) const {
             if (other.shapes_ != this->shapes_) {
-                throw runtime_error("Shape mismatch");
+                throw runtime_error("Shape mismatch in addition");
             }
 
             Tensor<T> result(this->shapes_, static_cast<T>(0));
@@ -172,7 +172,7 @@ class Tensor {
         // Subtract two tensors with same shape, element-wise
         Tensor<T> sub(const Tensor<T>& other) const {
             if (other.shapes_ != this->shapes_) {
-                throw runtime_error("Shape mismatch");
+                throw runtime_error("Shape mismatch in subtraction");
             }
 
             Tensor<T> result(this->shapes_, static_cast<T>(0));
@@ -186,7 +186,7 @@ class Tensor {
         // Multiply two tensors with same shape, element-wise
         Tensor<T> mul(const Tensor<T>& other) const {
             if (other.shapes_ != this->shapes_) {
-                throw runtime_error("Shape mismatch");
+                throw runtime_error("Shape mismatch in element-wise multiplication");
             }
 
             Tensor<T> result(this->shapes_, static_cast<T>(0));
@@ -213,7 +213,7 @@ class Tensor {
             const size_t n = this->shapes_[0], m = this->shapes_[1], p = other.shapes_[1];
 
             if (m != other.shapes_[0]) {
-                throw runtime_error("Shape mismatch");
+                throw runtime_error("Shape mismatch in matrix multiplication");
             }
             if (this->ndim() != 2 || other.ndim() != 2) {
                 throw runtime_error("Only 2D tensors are supported for matrix multiplication");
