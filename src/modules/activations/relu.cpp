@@ -2,21 +2,41 @@
 using namespace nn;
 
 Tensor<> ReLU::forward(const Tensor<>& input) {
-    this->input_cache_ = input;
+    /*
+    The forward process of ReLU is very similar to dropout with different criteria to select active units
+    */
 
-    return input.filter([](double x) { return x > 0.0f; });
-}
+    // no need to cache input. Instead, we have to cache the mask for backprop
+    this->mask_cache_ = Tensor<>(input.shapes(), 0.0f);
 
-Tensor<> ReLU::backward(const Tensor<>& grad_output) {
-    Tensor<> grad(grad_output.shapes(), 0.0f);
+    Tensor<> result(input.shapes(), 0.0f);
 
-    for (size_t i = 0; i < this->input_cache_.shapes()[0]; i++) {
-        for (size_t j = 0; j < this->input_cache_.shapes()[1]; j++) {
-            if (this->input_cache_[i, j] <= 0.0f) {
-                grad[i, j] = 0.0f;
+    for (size_t i = 0; i < input.shapes()[0]; i++) {
+        for (size_t j = 0; j < input.shapes()[1]; j++) {
+
+            if (input[i, j] > 0.0f) {
+                result[i, j] = input[i, j];
+                this->mask_cache_[i, j] = 1.0f;
+            } else {
+                result[i, j] = 0.0f;
             }
         }
     }
 
-    return grad;
+    return result;
+}
+
+Tensor<> ReLU::backward(const Tensor<>& grad_output) {
+    /*
+    Z = ReLU(Y) = max(0, Y)
+    Y R^B x M, B is the batch size and M is the output dimension
+
+    dL/dZ = grad_output
+    dZ/dY = MASK, where MASK[i, j] = 1 if Y[i, j] > 0 and 0 otherwise
+
+    dL/dY = dL/dZ * dZ/dY
+          = grad_output * MASK
+    */ 
+
+    return grad_output * this->mask_cache_;
 }

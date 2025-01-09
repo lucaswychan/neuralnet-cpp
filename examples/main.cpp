@@ -50,9 +50,9 @@ int main() {
             auto [data, labels] = batch.toTensor();
 
             // forward propagation
-            Tensor<> output = model.forward(data);
+            Tensor<> output = model(data);
 
-            loss = criterion.forward(output, labels);
+            loss = criterion(output, labels);
             // cout << "After loss" << endl;
             acc = metrics::accuracy(output, labels);
             // cout << "After acc" << endl;
@@ -74,7 +74,7 @@ int main() {
 
         cout << "------------------------------------" << endl;
         cout << "Total Loss in Epoch " << e + 1 << " = " << total_loss << "" << endl;
-        cout << "Total Accuracy in Epoch " << e + 1 << " = " << total_acc<< "%" << endl;
+        cout << "Total Accuracy in Epoch " << e + 1 << " = " << total_acc << "%" << endl;
         cout << "------------------------------------" << endl;
     }
 

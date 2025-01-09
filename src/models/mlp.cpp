@@ -9,8 +9,8 @@ MLP::MLP(vector<size_t> layer_sizes, double dropout_p) {
     for (size_t i = 0; i < this->num_layers_  - 1; i++) {
         this->layers_.push_back(new Linear(layer_sizes[i], layer_sizes[i + 1], true));
         if (i < this->num_layers_ - 2) {
-            this->layers_.push_back(new Dropout(dropout_p));
             this->layers_.push_back(new ReLU());
+            this->layers_.push_back(new Dropout(dropout_p));
         }
     }
 }

@@ -12,6 +12,8 @@ Currently supports:
 
 More to come.
 
+**Current achievements: achieving 95% accuracy on MNIST.**
+
 > It would be great if you could [star](https://github.com/lucaswychan/neuralnet-cpp) this project on GitHub. Discussion and suggestions are more welcome!
 
 ## Get Started

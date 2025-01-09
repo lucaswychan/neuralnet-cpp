@@ -7,5 +7,8 @@ class ReLU : public Module {
         ReLU() = default;
         virtual Tensor<> forward(const Tensor<>& input) override;
         virtual Tensor<> backward(const Tensor<>& grad_output) override;
+    
+    private:
+        Tensor<> mask_cache_; // cache for backprop
     };
 }
