@@ -1,6 +1,6 @@
-#include "linear.hpp"
 #include <random>
 #include <cmath>
+#include "linear.hpp"
 using namespace nn;
 
 Linear::Linear(size_t in_features, size_t out_features, bool bias) : in_features_(in_features), out_features_(out_features), bias_(bias) {
@@ -71,7 +71,6 @@ Tensor<> Linear::backward(const Tensor<>& grad_output) {
 }
 
 void Linear::update_params(const float lr) {
-    const size_t n = this->weights_.shapes()[0], m = this->weights_.shapes()[1];
 
     this->weights_ -= this->grad_weights_ * lr;
     this->biases_ -= this->grad_biases_ * lr;
@@ -81,12 +80,12 @@ void Linear::update_params(const float lr) {
 
 void Linear::randomizeParams() {
     // Calculate the limit for the uniform distribution
-    float limit = sqrt(6.0f / (this->in_features_ + this->out_features_));
+    double limit = sqrt(6.0f / (this->in_features_ + this->out_features_));
 
     // Set up the random number generator
     random_device rd;
     mt19937 gen(rd());
-    uniform_real_distribution<float> dis(-limit, limit);
+    uniform_real_distribution<double> dis(-limit, limit);
 
     // Xavier initialization
     for (size_t i = 0; i < this->in_features_; i++) {
