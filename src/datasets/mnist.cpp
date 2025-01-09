@@ -118,9 +118,9 @@ vector<int> MNIST::oneHotEncoding(const int& labels) {
 
 tuple<Tensor<>, Tensor<>> Batch::toTensor() {
     Tensor<> data = this->batchData;
-    
+
     Tensor<int> labels_int = this->batchLabels;
-    Tensor<> labels = labels_int.dtype<>();
+    Tensor<> labels = labels_int.dtype<double>();
     
     return make_tuple(data, labels);
 }
