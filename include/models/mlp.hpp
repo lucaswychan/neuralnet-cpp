@@ -4,8 +4,8 @@ using namespace nn;
 
 class MLP : public Module {
     public:
-        MLP(vector<size_t> layer_sizes);
-        MLP(initializer_list<size_t> layer_sizes);
+        MLP(vector<size_t> layer_sizes, double dropout_p = 0.5);
+        MLP(initializer_list<size_t> layer_sizes, double dropout_p = 0.5);
         ~MLP();
 
         virtual Tensor<> forward(const Tensor<>& input) override;

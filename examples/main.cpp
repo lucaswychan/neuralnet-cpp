@@ -1,9 +1,9 @@
-#include <iostream>
 #include <numeric>
 #include "mlp.hpp"
 #include "mnist.hpp"
 #include "cross_entropy.hpp"
 #include "accuracy.hpp"
+#include "utils.hpp"
 using namespace nn;
 
 int main() {
@@ -13,6 +13,7 @@ int main() {
     const double LR = 0.01;
     const double EPOCH = 10;
     const double BATCH_SIZE = 64;
+    const double DROPOUT_P = 0.3;
 
     MNIST dataset(BATCH_SIZE);
 
@@ -26,7 +27,7 @@ int main() {
     }
 
     // Initialize the model
-    MLP model = MLP({784, 128, 64, 10});
+    MLP model = MLP({784, 128, 64, 10}, DROPOUT_P);
 
     // Define the loss function
     CrossEntropyLoss criterion = CrossEntropyLoss();
@@ -52,9 +53,9 @@ int main() {
             Tensor<> output = model.forward(data);
 
             loss = criterion.forward(output, labels);
-            cout << "After loss" << endl;
+            // cout << "After loss" << endl;
             acc = metrics::accuracy(output, labels);
-            cout << "After acc" << endl;
+            // cout << "After acc" << endl;
 
             accuracy_list.push_back(acc);
             loss_list.push_back(loss);
@@ -64,7 +65,8 @@ int main() {
             model.backward(grad);
             model.update_params(LR);
 
-            cout << "Batch " << i + 1 << " Loss: " << loss << " Accuracy: " << acc * 100 << "%" << endl;
+            // print the training stats
+            print_training_stats_line(i, loss, acc);
         }
 
         double total_loss = accumulate(loss_list.begin(), loss_list.end(), 0.0) / loss_list.size();
