@@ -49,6 +49,14 @@ enum class ReduceOp {
     ARGMIN
 };
 
+// for add, subtract, multiply, divide
+enum class ArithmeticOp {
+    ADD,
+    SUB,
+    MUL,
+    DIV
+};
+
 // ================================================definition================================================
 
 template<typename U, typename V>
