@@ -44,8 +44,9 @@ class Module {
             return this->forward(input);
         }
 
-        inline void train() { this->training = true; }
+        inline void train(const bool mode = true) { this->training = mode; }
         inline void eval() { this->training = false; }
+        inline bool is_training() const { return this->training; }
     
     protected:
         /**
