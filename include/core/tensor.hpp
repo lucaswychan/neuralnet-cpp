@@ -1,6 +1,5 @@
 #pragma once
 #include <iostream>
-#include <vector>
 #include <initializer_list>
 #include "tensor_utils.hpp"
 using namespace std;
