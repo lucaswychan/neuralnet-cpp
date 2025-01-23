@@ -9,6 +9,15 @@ jobs:
         runs-on: ubuntu-latest
 
         steps:
+            - name: Install newer GCC
+              run: |
+                  sudo apt update
+                  sudo apt install -y g++-13
+            - name: Set GCC 13 as default
+              run: |
+                  sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
+                  sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
+
             - uses: actions/checkout@v4.2.2
 
             - name: Setup cmake
