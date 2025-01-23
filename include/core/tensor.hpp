@@ -63,6 +63,90 @@ class Tensor {
             return idxs;
         }
 
+        template <typename U = T>
+        Tensor<U> reduce(ReduceOp op) const {        
+            if (this->ndim() > 2) {
+                throw runtime_error("Only 1D and 2D tensors are supported for reduce");
+            }
+
+            const size_t num_rows = (this->ndim() == 2)? this->shapes_[0] : 1;
+            const size_t num_cols = (this->ndim() == 2)? this->shapes_[1] : this->shapes_[0];
+
+            
+            // Result will be a tensor of shape (num_rows, 1)
+            vector<U> result(num_rows);
+            
+            for (size_t i = 0; i < num_rows; i++) {
+                size_t start_idx = i * num_cols;
+                
+                // Initialize with first element in row
+                T extreme_val = this->data_[start_idx];
+                size_t extreme_idx = 0;
+                
+                // Process remaining elements in the row
+                for (size_t j = 1; j < num_cols; j++) {
+                    size_t curr_idx = start_idx + j;
+                    bool update = false;
+                    
+                    switch (op) {
+                        case ReduceOp::MAX:
+                        case ReduceOp::ARGMAX:
+                            update = this->data_[curr_idx] > extreme_val;
+                            break;
+                        case ReduceOp::MIN:
+                        case ReduceOp::ARGMIN:
+                            update = this->data_[curr_idx] < extreme_val;
+                            break;
+                    }
+                    
+                    if (update) {
+                        extreme_val = this->data_[curr_idx];
+                        extreme_idx = j;
+                    }
+                }
+                
+                // Store the result
+                switch (op) {
+                    case ReduceOp::MAX:
+                    case ReduceOp::MIN:
+                        result[i] = extreme_val;
+                        break;
+                    case ReduceOp::ARGMAX:
+                    case ReduceOp::ARGMIN:
+                        result[i] = extreme_idx;
+                        break;
+                }
+            }
+            
+            return Tensor<U>(result);
+        }
+
+        Tensor<T> arithmetic_operation_impl(ArithmeticOp op, const Tensor<T>& other) const {
+            if (other.shapes_ != this->shapes_) {
+                throw runtime_error("Shape mismatch in arithmetic operation");
+            }
+
+            Tensor<T> result(this->shapes_, static_cast<T>(0));
+
+            for (size_t i = 0; i < this->size_; i++) {
+                switch (op) {
+                    case ArithmeticOp::ADD:
+                        result.data_[i] = this->data_[i] + other.data_[i];
+                        break;
+                    case ArithmeticOp::SUB:
+                        result.data_[i] = this->data_[i] - other.data_[i];
+                        break;
+                    case ArithmeticOp::MUL:
+                        result.data_[i] = this->data_[i] * other.data_[i];
+                        break;
+                    case ArithmeticOp::DIV:
+                        result.data_[i] = this->data_[i] / other.data_[i];
+                        break;
+                }
+            }
+            return result;
+        }
+
         // Declare friendship so that TensorView can access private members of Tensor
         template<typename U, typename V>
         friend Tensor<V> dtype_impl(const Tensor<U>& tensor);
@@ -156,45 +240,23 @@ class Tensor {
         }
 
         // Add two tensors with same shape, element-wise
-        Tensor<T> add(const Tensor& other) const {
-            if (other.shapes_ != this->shapes_) {
-                throw runtime_error("Shape mismatch in addition");
-            }
-
-            Tensor<T> result(this->shapes_, static_cast<T>(0));
-
-            for (size_t i = 0; i < this->size_; i++) {
-                result.data_[i] = this->data_[i] + other.data_[i];
-            }
-            return result;
+        inline Tensor<T> add(const Tensor& other) const {
+            return arithmetic_operation_impl(ArithmeticOp::ADD, other);
         }
 
         // Subtract two tensors with same shape, element-wise
-        Tensor<T> sub(const Tensor<T>& other) const {
-            if (other.shapes_ != this->shapes_) {
-                throw runtime_error("Shape mismatch in subtraction");
-            }
-
-            Tensor<T> result(this->shapes_, static_cast<T>(0));
-
-            for (size_t i = 0; i < this->size_; i++) {
-                result.data_[i] = this->data_[i] - other.data_[i];
-            }
-            return result;
+        inline Tensor<T> sub(const Tensor<T>& other) const {
+            return arithmetic_operation_impl(ArithmeticOp::SUB, other);
         }
 
         // Multiply two tensors with same shape, element-wise
-        Tensor<T> mul(const Tensor<T>& other) const {
-            if (other.shapes_ != this->shapes_) {
-                throw runtime_error("Shape mismatch in element-wise multiplication");
-            }
+        inline Tensor<T> mul(const Tensor<T>& other) const {
+            return arithmetic_operation_impl(ArithmeticOp::MUL, other);
+        }
 
-            Tensor<T> result(this->shapes_, static_cast<T>(0));
-
-            for (size_t i = 0; i < this->size_; i++) {
-                result.data_[i] = this->data_[i] * other.data_[i];
-            }
-            return result;
+        // Divide two tensors with same shape, element-wise
+        inline Tensor<T> div(const Tensor<T>& other) const {
+            return arithmetic_operation_impl(ArithmeticOp::DIV, other);
         }
 
         // Multiply all elements of tensor with the given scaler
@@ -324,65 +386,6 @@ class Tensor {
             }
 
             return result.dtype<int>();
-        }
-        
-
-        template <typename U = T>
-        Tensor<U> reduce(ReduceOp op) const {        
-            if (this->ndim() > 2) {
-                throw runtime_error("Only 1D and 2D tensors are supported for reduce");
-            }
-
-            const size_t num_rows = (this->ndim() == 2)? this->shapes_[0] : 1;
-            const size_t num_cols = (this->ndim() == 2)? this->shapes_[1] : this->shapes_[0];
-
-            
-            // Result will be a tensor of shape (num_rows, 1)
-            vector<U> result(num_rows);
-            
-            for (size_t i = 0; i < num_rows; i++) {
-                size_t start_idx = i * num_cols;
-                
-                // Initialize with first element in row
-                T extreme_val = this->data_[start_idx];
-                size_t extreme_idx = 0;
-                
-                // Process remaining elements in the row
-                for (size_t j = 1; j < num_cols; j++) {
-                    size_t curr_idx = start_idx + j;
-                    bool update = false;
-                    
-                    switch (op) {
-                        case ReduceOp::MAX:
-                        case ReduceOp::ARGMAX:
-                            update = this->data_[curr_idx] > extreme_val;
-                            break;
-                        case ReduceOp::MIN:
-                        case ReduceOp::ARGMIN:
-                            update = this->data_[curr_idx] < extreme_val;
-                            break;
-                    }
-                    
-                    if (update) {
-                        extreme_val = this->data_[curr_idx];
-                        extreme_idx = j;
-                    }
-                }
-                
-                // Store the result
-                switch (op) {
-                    case ReduceOp::MAX:
-                    case ReduceOp::MIN:
-                        result[i] = extreme_val;
-                        break;
-                    case ReduceOp::ARGMAX:
-                    case ReduceOp::ARGMIN:
-                        result[i] = extreme_idx;
-                        break;
-                }
-            }
-            
-            return Tensor<U>(result);
         }
 
         inline Tensor<> max() const {

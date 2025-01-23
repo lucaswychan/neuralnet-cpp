@@ -1,11 +1,19 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 
 # Set the project name
 project(neuralnet-cpp)
 
+# Add option for building tests (OFF by default)
+option(BUILD_TESTS "Build tests" OFF)
+
 # Specify the C++ standard
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+# Only enable testing if BUILD_TESTS is ON
+if(BUILD_TESTS)
+    enable_testing()
+endif()
 
 # Add include directories
 include_directories(
@@ -19,9 +27,6 @@ include_directories(
     include/models
     include/metrics
 )
-
-# Add the executable for the main example
-add_executable(main examples/main.cpp)
 
 # Add source files
 set(SOURCE_FILES
@@ -40,8 +45,26 @@ set(SOURCE_FILES
     src/utils/utils.cpp
 )
 
-# Link the source files to the executable
-target_sources(main PRIVATE ${SOURCE_FILES})
+# Create a library from your source files
+add_library(neuralnet ${SOURCE_FILES})
+
+# Add the executable for the main example
+add_executable(main examples/main.cpp)
+target_link_libraries(main neuralnet)
+
+# Only build tests if BUILD_TESTS is ON
+if(BUILD_TESTS)
+    # Add Google Test
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/refs/tags/v1.13.0.zip
+    )
+    FetchContent_MakeAvailable(googletest)
+
+    # Add test directory
+    add_subdirectory(tests)
+endif()
 
 # If you have any libraries to link, you can add them here
 # target_link_libraries(main <library_name>)
