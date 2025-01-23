@@ -11,8 +11,8 @@ jobs:
         steps:
             - name: Install newer GCC
               run: |
-                  sudo apt update
-                  sudo apt install -y g++-16
+                  sudo apt-get update
+                  sudo apt-get install -y g++-16
             - name: Set GCC 16 as default
               run: |
                   sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-16 100
