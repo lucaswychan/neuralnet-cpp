@@ -55,7 +55,7 @@ class Tensor {
             // Check bounds
             for (size_t i = 0; i < idxs.size(); ++i) {
                 if (idxs[i] < 0 || idxs[i] >= this->shapes_[i]) {
-                    throw out_of_range("Tensor: Index out of bounds");
+                    throw std::out_of_range("Tensor: Index out of bounds");
                 }
             }
 
@@ -488,12 +488,12 @@ class Tensor {
          * @tparam Dim The dimension along which the slice is taken.
          * @param index The index of the slice along the specified dimension.
          * @return A `TensorView<T>` representing the view of the specified slice.
-         * @throws std::out_of_range if the index is out of bounds for the given dimension.
+         * @throws std::std::out_of_range if the index is out of bounds for the given dimension.
          */
 
         template<size_t Dim>
         TensorView<T> slice(size_t index) {
-            if (index >= this->shapes_[Dim]) throw out_of_range("Index out of bounds");
+            if (index >= this->shapes_[Dim]) throw std::out_of_range("Index out of bounds");
 
             // Calculate strides for the resulting view
             vector<size_t> view_strides;
@@ -523,7 +523,7 @@ class Tensor {
          * 
          * @param index The index of the row to view.
          * @return A `TensorView<T>` representing the view of the specified row.
-         * @throws std::out_of_range if the index is out of bounds for the row dimension.
+         * @throws std::std::out_of_range if the index is out of bounds for the row dimension.
          */
         inline TensorView<T> row(size_t index) {
             return this->slice<0>(index);
@@ -538,7 +538,7 @@ class Tensor {
          * 
          * @param index The index of the column to view.
          * @return A `TensorView<T>` representing the view of the specified column.
-         * @throws std::out_of_range if the index is out of bounds for the column dimension.
+         * @throws std::std::out_of_range if the index is out of bounds for the column dimension.
          */
         inline TensorView<T> col(size_t index) {
             return this->slice<1>(index);
