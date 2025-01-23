@@ -8,7 +8,7 @@ option(BUILD_TESTS "Build tests" OFF)
 
 # Specify the C++ standard
 set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Only enable testing if BUILD_TESTS is ON
