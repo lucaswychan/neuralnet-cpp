@@ -165,11 +165,11 @@ class Tensor {
 
         // 1D tensor constructor
         Tensor(const initializer_list<T>& data) : size_(data.size()), data_(data.begin(), data.end()) {
-            this->shapes_ = vector<size_t> {data.size()};
+            this->shapes_ = vector<size_t> { data.size() };
         }
 
         Tensor(const vector<T>& data) : size_(data.size()), data_(data.begin(), data.end()) {
-            this->shapes_ = vector<size_t> {data.size()};
+            this->shapes_ = vector<size_t> { data.size() };
         }
 
         // 2D tensor constructor
@@ -269,7 +269,12 @@ class Tensor {
             return result;
         }
 
-        // Matrix multiplication. Currently only support 2D tensors.
+        /// @brief Matrix multiplication.
+        /// @details This function supports matrix multiplication between two 2D tensors.
+        /// The first tensor is of shape (n, m) and the second tensor is of shape (m, p).
+        /// The resulting tensor is of shape (n, p).
+        /// @param other The second tensor to multiply with.
+        /// @return A new tensor that is the result of the matrix multiplication.
         Tensor<T> matmul(const Tensor<T>& other) const {
             // this->data_ R^n x m, other.data_ R^m x p
             const size_t n = this->shapes_[0], m = this->shapes_[1], p = other.shapes_[1];
@@ -296,7 +301,14 @@ class Tensor {
             return result;
         }
 
-        // Transpose. Currently only support 1D and 2D tensors
+        
+        /// @brief Transpose the tensor.
+        /// @details This function supports transposing 1D and 2D tensors.
+        /// 1D tensors are transposed from shape (1, n) to (n, 1).
+        /// For 2D tensors, it swaps rows and columns.
+        /// @return A new tensor that is the transpose of the original tensor.
+        /// @throws runtime_error if the tensor has more than 2 dimensions.
+
         Tensor<T> transpose() const {
             if (this->ndim() > 2) {
                 throw runtime_error("Only 1D and 2D tensors are supported for transpose");
@@ -316,10 +328,26 @@ class Tensor {
             return result;
         }
 
-        // Flatten the tensor
+
+        
+        /// @brief Flatten the tensor into 1D.
+        /// @return A new 1D tensor with the same elements as the original tensor.
         Tensor<T> flatten() const {
-            this->shapes_ = vector<size_t> { 1, this->size_ };
-            return *this;
+            Tensor<T> result({ this->size_ }, static_cast<T>(0));
+
+            for (size_t i = 0; i < this->size_; i++) {
+                result.data_[i] = this->data_[i];
+            }
+
+            return result;
+        }
+
+        /// @brief Flatten the tensor into 1D in-place.
+        /// @details This function only changes the shape of the tensor, and does not modify the underlying data.
+        /// @post The shape of the tensor is changed to 1D, with the same elements as the original tensor.
+        void flatten() {
+            this->shapes_ = { this->size_ };
+            return;
         }
         
 
@@ -333,7 +361,8 @@ class Tensor {
             return *this;
         }
 
-        // Get the absolute value of each element
+        /// @brief Calculate the absolute value of each element in the tensor
+        /// @return a new tensor with the same shape as the original, but with each element replaced by its absolute value
         Tensor<T> abs() const {
             Tensor<T> result(this->shapes_, static_cast<T>(0));
 
@@ -343,7 +372,9 @@ class Tensor {
             return result;
         }
 
-        // Perform filtering with function condition
+        /// @brief Filter the tensor with the given function
+        /// @param func a function to test each element of the tensor. It should return true if the element passes the test
+        /// @return a new tensor with the same shape as the original, but all elements that fail the test are set to 0
         Tensor<T> filter(bool (*func)(T)) const {
             Tensor<T> result(this->shapes_, static_cast<T>(0));
 
@@ -355,6 +386,9 @@ class Tensor {
             return result;
         }
 
+        /// @brief Perform element-wise transformation with a function
+        /// @param func a function perform element-wise transformation to the tensor
+        /// @return a new tensor with the same shape as the original, but with each element transformed by the given func
         Tensor<T> map(T (*func)(T)) const {
             Tensor<T> result(this->shapes_, static_cast<T>(0));
 
@@ -364,6 +398,8 @@ class Tensor {
             return result;
         }
 
+        /// @brief Calculate the sum of all elements in the tensor
+        /// @return The sum of all elements in the tensor, regardless of the dimension
         T sum() const {
             T sum = static_cast<T>(0);
 
@@ -374,7 +410,10 @@ class Tensor {
             return sum;
         }
 
-        Tensor<int> equal(const Tensor& other) {
+        /// @brief Check if all elements of two tensors are equal
+        /// @param other Tensor to compare
+        /// @return Tensor of integers where each element is 1 if the two tensors are equal at the same index, 0 otherwise
+        Tensor<int> equal(const Tensor& other) const{
             if (other.shapes_ != this->shapes_) {
                 throw runtime_error("Shape mismatch");
             }
@@ -388,31 +427,71 @@ class Tensor {
             return result.dtype<int>();
         }
 
+        /// @brief Check if all elements of two tensors are equal
+        /// @param other Tensor to compare
+        /// @return true if all elements are equal, false otherwise
+        bool compare(const Tensor& other) const {
+            if (other.shapes_ != this->shapes_) {
+                throw runtime_error("Shape mismatch");
+            }
+
+            for (size_t i = 0; i < this->size_; i++) {
+                if (this->data_[i] != other.data_[i]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /// @brief Reduce the tensor to the maximum value of all elements
+        /// @return a tensor with a single element, the maximum of all elements in the tensor
         inline Tensor<> max() const {
             return reduce(ReduceOp::MAX);
         }
 
+
+        /// @brief Reduce the tensor to the indices of the maximum values along each row
+        /// @return a tensor with indices of the maximum values for each row
         inline Tensor<size_t> argmax() const {
             return reduce<size_t>(ReduceOp::ARGMAX);
         }
 
+        /// @brief Reduce the tensor to the minimum value of all elements
+        /// @return a tensor with a single element, the minimum of all elements in the tensor
         inline Tensor<> min() const {
             return reduce(ReduceOp::MIN);
         }
 
+        /// @brief Reduce the tensor to the indices of the minimum values along each row
+        /// @return a tensor with indices of the minimum values for each row
         inline Tensor<size_t> argmin() const {
             return reduce<size_t>(ReduceOp::ARGMIN);
         }
 
-        // Convert tensor to different data type
+        
+        /// @brief Convert the tensor to a tensor of a different type.
+        /// @details If U is not provided, it defaults to double.
+        /// @param U the type to convert to
+        /// @return a tensor with the same shape and data, but with the type U
         template<typename U = double>
         Tensor<U> dtype() const {
             return dtype_impl<T, U>(*this);
         }
 
 
-        // Get a vector representing a slice (row/column/etc)
-        // Slice with reference return
+        /**
+         * @brief Get a view of a specific slice along a specified dimension.
+         * 
+         * This function creates a `TensorView` that represents a reference-like view 
+         * into the tensor data along a specified dimension. The view does not contain 
+         * actual data but provides access to the underlying tensor data.
+         * 
+         * @tparam Dim The dimension along which the slice is taken.
+         * @param index The index of the slice along the specified dimension.
+         * @return A `TensorView<T>` representing the view of the specified slice.
+         * @throws std::out_of_range if the index is out of bounds for the given dimension.
+         */
+
         template<size_t Dim>
         TensorView<T> slice(size_t index) {
             if (index >= this->shapes_[Dim]) throw out_of_range("Index out of bounds");
@@ -435,11 +514,33 @@ class Tensor {
             return TensorView<T>(*this, indices, view_strides, Dim, slice_size);
         }
 
-        // Convenience methods for common operations
+
+        /**
+         * @brief Get a view of a specific row in the tensor.
+         * 
+         * This function creates a `TensorView` that represents a reference-like view 
+         * into the tensor data for a specific row. The view does not contain actual data 
+         * but provides access to the underlying tensor data.
+         * 
+         * @param index The index of the row to view.
+         * @return A `TensorView<T>` representing the view of the specified row.
+         * @throws std::out_of_range if the index is out of bounds for the row dimension.
+         */
         inline TensorView<T> row(size_t index) {
             return this->slice<0>(index);
         }
 
+        /**
+         * @brief Get a view of a specific column in the tensor.
+         * 
+         * This function creates a `TensorView` that represents a reference-like view 
+         * into the tensor data for a specific column. The view does not contain actual data 
+         * but provides access to the underlying tensor data.
+         * 
+         * @param index The index of the column to view.
+         * @return A `TensorView<T>` representing the view of the specified column.
+         * @throws std::out_of_range if the index is out of bounds for the column dimension.
+         */
         inline TensorView<T> col(size_t index) {
             return this->slice<1>(index);
         }
@@ -461,6 +562,7 @@ class Tensor {
         inline Tensor<T> operator*(const Tensor<T>& other) const { return this->mul(other); }
         inline Tensor<T> operator*(const T& scaler) const { return this->mul(scaler); }
         inline Tensor<T>& operator=(const Tensor<T>& other) { return this->assign(other); }
+        inline bool operator==(const Tensor<T>& other) const { return this->compare(other); }
 
         const Tensor<T> operator+=(const Tensor<T>& other) { 
             *this = *this + other;
