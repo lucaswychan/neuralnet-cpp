@@ -32,4 +32,4 @@ jobs:
               run: cmake --build build
 
             - name: Run Tests
-              run: ./build/tests/unit_tests
+              run: ctest
