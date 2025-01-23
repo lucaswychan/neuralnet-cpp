@@ -1,5 +1,8 @@
 #pragma once
 #include <vector>
+#include <algorithm>
+#include <stdexcept>
+
 using namespace std;
 
 // ================================================declaration================================================
@@ -75,7 +78,7 @@ Tensor<V> dtype_impl(const Tensor<U>& tensor) {
 // TensorView class to provide a reference-like view into tensor data
 template<typename U>    // Indexing operator
 U& TensorView<U>::operator[](size_t idx) {
-    if (idx >= this->size_) throw out_of_range("TensorView: Index out of bounds");
+    if (idx >= this->size_) throw std::out_of_range("TensorView: Index out of bounds");
     
     vector<size_t> full_indices = this->indices_;
     size_t remaining = idx;

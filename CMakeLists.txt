@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.20)
 
 # Set the project name
 project(neuralnet-cpp)
@@ -8,7 +8,8 @@ option(BUILD_TESTS "Build tests" OFF)
 
 # Specify the C++ standard
 set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Only enable testing if BUILD_TESTS is ON
 if(BUILD_TESTS)
@@ -54,16 +55,18 @@ target_link_libraries(main neuralnet)
 
 # Only build tests if BUILD_TESTS is ON
 if(BUILD_TESTS)
-    # Add Google Test
-    include(FetchContent)
-    FetchContent_Declare(
-        googletest
-        URL https://github.com/google/googletest/archive/refs/tags/v1.13.0.zip
-    )
-    FetchContent_MakeAvailable(googletest)
+    # Add Doctest
+    # include(FetchContent)
+    # FetchContent_Declare(
+    #     doctest
+    #     GIT_REPOSITORY https://github.com/doctest/doctest.git
+    #     GIT_TAG        v2.4.11
+    # )
+    # FetchContent_MakeAvailable(doctest)
 
     # Add test directory
     add_subdirectory(tests)
+
 endif()
 
 # If you have any libraries to link, you can add them here

@@ -10,16 +10,21 @@ file(GLOB TEST_FILES
     "metrics/*_test.cpp"
 )
 
-# Create test executable
-add_executable(unit_tests ${TEST_FILES})
+# Define the macro for Doctest
+macro(add_doctest_test testname)
+    add_executable(${testname} ${ARGN})
+    # target_link_libraries(${testname} neuralnet doctest::doctest)
+    target_link_libraries(${testname} neuralnet)
+endmacro()
 
-# Link with Google Test and your library
-target_link_libraries(unit_tests
-    neuralnet
-    gtest
-    gtest_main
-    gmock
-)
+# Create test executables
+foreach(file ${TEST_FILES})
+    get_filename_component(testname ${file} NAME_WE)
+    add_doctest_test(${testname} ${file})
+endforeach()
 
 # Add tests to CTest
-add_test(NAME unit_tests COMMAND unit_tests)
+foreach(file ${TEST_FILES})
+    get_filename_component(testname ${file} NAME_WE)
+    add_test(NAME ${testname} COMMAND ${testname})
+endforeach()

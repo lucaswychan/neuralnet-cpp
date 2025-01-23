@@ -1,0 +1,26 @@
+name: C++ Tests
+
+on:
+    pull_request:
+        branches: [main] # Adjust this to match your main branch name
+
+jobs:
+    build-and-test:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4.2.2
+
+            - name: Setup cmake
+              uses: jwlawson/actions-setup-cmake@v2
+              with:
+                  cmake-version: "3.20"
+
+            - name: Configure CMake
+              run: cmake -S . -B build -DBUILD_TESTS=ON
+
+            - name: Build
+              run: cmake --build build
+
+            - name: Run Tests
+              run: ctest
