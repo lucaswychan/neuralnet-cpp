@@ -55,16 +55,18 @@ target_link_libraries(main neuralnet)
 
 # Only build tests if BUILD_TESTS is ON
 if(BUILD_TESTS)
-    # Add Google Test
-    include(FetchContent)
-    FetchContent_Declare(
-        googletest
-        URL https://github.com/google/googletest/archive/refs/tags/v1.15.0.zip
-    )
-    FetchContent_MakeAvailable(googletest)
+    # Add Doctest
+    # include(FetchContent)
+    # FetchContent_Declare(
+    #     doctest
+    #     GIT_REPOSITORY https://github.com/doctest/doctest.git
+    #     GIT_TAG        v2.4.11
+    # )
+    # FetchContent_MakeAvailable(doctest)
 
     # Add test directory
     add_subdirectory(tests)
+
 endif()
 
 # If you have any libraries to link, you can add them here
