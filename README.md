@@ -1,7 +1,7 @@
 # neuralnet-cpp
 
 ![C++](https://img.shields.io/badge/c++-%2300599C.svg?&logo=c%2B%2B&logoColor=white)
-![C++ Unit Tests](https://github.com/lucaswychan/neuralnet-cpp/actions/workflows/cpp_test.yml/badge.svg)
+![C++ Unit Tests](https://github.com/lucaswychan/neuralnet-cpp/actions/workflows/cpp_test.yaml/badge.svg)
 
 Neural Network in pure C++ without PyTorch and TensorFlow.
 
