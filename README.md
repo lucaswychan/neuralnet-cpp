@@ -1,6 +1,6 @@
 # neuralnet-cpp
 
-![C++](https://img.shields.io/badge/c++-%2300599C.svg?&logo=c%2B%2B&logoColor=white)
+![C++](https://img.shields.io/badge/C%2B%2B-23-blue.svg)
 ![C++ Unit Tests](https://github.com/lucaswychan/neuralnet-cpp/actions/workflows/cpp_test.yaml/badge.svg)
 [![GitHub license badge](https://img.shields.io/github/license/lucaswychan/neural-stock-prophet?color=blue)](https://opensource.org/licenses/MIT)
 
@@ -22,18 +22,21 @@ More to come.
 
 ## Get Started
 
-Make sure you have [CMake](https://cmake.org/) installed.
+This project requires C++23, GCC >= 13.3, and CMake >= 3.20 to compile. Please make sure you have [GCC](https://gcc.gnu.org) and [CMake](https://cmake.org/) installed.
 
-For Mac OS, run the following commands:
+For **Mac OS**, run the following commands:
 
 ```bash
 brew install cmake
+brew install gcc
 ```
 
-For Linux, run the following commands:
+For **Linux**, run the following commands:
 
 ```bash
-sudo apt-get install cmake
+sudo apt update
+sudo apt install cmake
+sudo apt install build-essential
 ```
 
 Get the repository:
@@ -110,3 +113,5 @@ class MyModule : public nn::Module {
 Please refer to the [TODO list](https://github.com/lucaswychan/neuralnet-cpp/blob/main/TODO.md).
 
 ## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
