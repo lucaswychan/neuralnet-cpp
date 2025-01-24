@@ -8,9 +8,9 @@ using namespace std;
 template <typename T = double>
 class Tensor {
     private:
-        vector<size_t> shapes_; // store the dimensions of the tensor
-        size_t size_; // store the number of elements in the tensor
         vector<T> data_; // data is stored as a 1D vector
+        vector<size_t> shapes_; // store the dimensions of the tensor
+        mutable size_t cached_size_ = 0; // store the number of elements in the tensor
 
         // Helper function to calculate the index in the 1D vector for a given set of indices expressed in the form of N-D vector
         size_t calculateIndex(const vector<size_t>& idxs) const {
@@ -127,7 +127,7 @@ class Tensor {
 
             Tensor<T> result(this->shapes_, static_cast<T>(0));
 
-            for (size_t i = 0; i < this->size_; i++) {
+            for (size_t i = 0; i < this->size(); i++) {
                 switch (op) {
                     case ArithmeticOp::ADD:
                         result.data_[i] = this->data_[i] + other.data_[i];
@@ -163,21 +163,23 @@ class Tensor {
         }
 
         // 1D tensor constructor
-        Tensor(const initializer_list<T>& data) : size_(data.size()), data_(data.begin(), data.end()) {
-            this->shapes_ = vector<size_t> { data.size() };
+        Tensor(const initializer_list<T>& data_1d) {
+            this->data_ = vector<T>(data_1d.begin(), data_1d.end());
+            this->shapes_ = vector<size_t> { data_1d.size() };
         }
 
-        Tensor(const vector<T>& data) : size_(data.size()), data_(data.begin(), data.end()) {
-            this->shapes_ = vector<size_t> { data.size() };
+        Tensor(const vector<T>& data_1d) {
+            this->data_ = data_1d;
+            this->shapes_ = vector<size_t> { data_1d.size() };
         }
 
         // 2D tensor constructor
         Tensor(const initializer_list<initializer_list<T>>& data_2d) {
             const size_t n = data_2d.size(), m = data_2d.begin()->size();
-            this->size_ = n * m;
 
             this->shapes_ = vector<size_t> { n, m };
 
+            this->data_.reserve(n * m);  // Optimize memory allocation
             for (const initializer_list<T>& row : data_2d) {
                 this->data_.insert(this->data_.end(), row.begin(), row.end());
             }
@@ -185,10 +187,10 @@ class Tensor {
 
         Tensor(const vector<vector<T>>& data_2d) {
             const size_t n = data_2d.size(), m = data_2d.begin()->size();
-            this->size_ = n * m;
 
             this->shapes_ = vector<size_t> { n, m };
 
+            this->data_.reserve(n * m);  // Optimize memory allocation
             for (const vector<T>& row : data_2d) {
                 this->data_.insert(this->data_.end(), row.begin(), row.end());
             }
@@ -197,10 +199,10 @@ class Tensor {
         // 3D tensor constructor
         Tensor(const initializer_list<initializer_list<initializer_list<T>>>& data_3d) {
             const size_t n = data_3d.size(), m = data_3d.begin()->size(), l = data_3d.begin()->begin()->size();
-            this->size_ = n * m * l;
 
             this->shapes_ = vector<size_t> { n, m, l };
 
+            this->data_.reserve(n * m * l);  // Optimize memory allocation
             for (const initializer_list<initializer_list<T>>& matrix : data_3d) {
                 for (const initializer_list<T>& row : matrix) {
                     this->data_.insert(this->data_.end(), row.begin(), row.end());
@@ -210,10 +212,10 @@ class Tensor {
 
         Tensor(const vector<vector<vector<T>>>& data_3d) {
             const size_t n = data_3d.size(), m = data_3d.begin()->size(), l = data_3d.begin()->begin()->size();
-            this->size_ = n * m * l;
 
             this->shapes_ = vector<size_t> { n, m, l };
 
+            this->data_.reserve(n * m * l);  // Optimize memory allocation
             for (const vector<vector<T>>& matrix : data_3d) {
                 for (const vector<T>& row : matrix) {
                     this->data_.insert(this->data_.end(), row.begin(), row.end());
@@ -224,12 +226,11 @@ class Tensor {
         // certin value constructor
         Tensor(const vector<size_t>& shape, const T& value) {
             this->shapes_ = shape;
-            this->size_ = 1;
-            for (const size_t& s : shape) {
-                this->size_ *= s;
+            size_t size = 1;
+            for (const size_t& dim : shape) {
+                size *= dim;
             }
-
-            this->data_.resize(this->size_, value);
+            this->data_.resize(size, value);
         }
 
         // copy constructor
@@ -262,7 +263,7 @@ class Tensor {
         Tensor<T> mul(const T& scaler) const {
             Tensor<T> result(this->shapes_, static_cast<T>(0));
 
-            for (size_t i = 0; i < this->size_; i++) {
+            for (size_t i = 0; i < this->size(); i++) {
                 result.data_[i] = this->data_[i] * scaler;
             }
             return result;
@@ -332,9 +333,9 @@ class Tensor {
         /// @brief Flatten the tensor into 1D.
         /// @return A new 1D tensor with the same elements as the original tensor.
         Tensor<T> flatten() const {
-            Tensor<T> result({ this->size_ }, static_cast<T>(0));
+            Tensor<T> result({ this->size() }, static_cast<T>(0));
 
-            for (size_t i = 0; i < this->size_; i++) {
+            for (size_t i = 0; i < this->size(); i++) {
                 result.data_[i] = this->data_[i];
             }
 
@@ -345,7 +346,7 @@ class Tensor {
         /// @details This function only changes the shape of the tensor, and does not modify the underlying data.
         /// @post The shape of the tensor is changed to 1D, with the same elements as the original tensor.
         void flatten() {
-            this->shapes_ = { this->size_ };
+            this->shapes_ = { this->size() };
             return;
         }
         
@@ -355,7 +356,6 @@ class Tensor {
             if (this == &other) return *this;
 
             this->shapes_ = other.shapes_;
-            this->size_ = other.size_;
             this->data_ = other.data_;
             return *this;
         }
@@ -365,7 +365,7 @@ class Tensor {
         Tensor<T> abs() const {
             Tensor<T> result(this->shapes_, static_cast<T>(0));
 
-            for (size_t i = 0; i < this->size_; i++) {
+            for (size_t i = 0; i < this->size(); i++) {
                 result.data_[i] = std::abs(this->data_[i]);
             }
             return result;
@@ -377,7 +377,7 @@ class Tensor {
         Tensor<T> filter(bool (*func)(T)) const {
             Tensor<T> result(this->shapes_, static_cast<T>(0));
 
-            for (size_t i = 0; i < this->size_; i++) {
+            for (size_t i = 0; i < this->size(); i++) {
                 if (func(this->data_[i])) {
                     result.data_[i] = this->data_[i];
                 }
@@ -391,7 +391,7 @@ class Tensor {
         Tensor<T> map(T (*func)(T)) const {
             Tensor<T> result(this->shapes_, static_cast<T>(0));
 
-            for (size_t i = 0; i < this->size_; i++) {
+            for (size_t i = 0; i < this->size(); i++) {
                 result.data_[i] = func(this->data_[i]);
             }
             return result;
@@ -402,7 +402,7 @@ class Tensor {
         T sum() const {
             T sum = static_cast<T>(0);
 
-            for (size_t i = 0; i < this->size_; i++) {
+            for (size_t i = 0; i < this->size(); i++) {
                 sum += this->data_[i];
             }
             
@@ -419,7 +419,7 @@ class Tensor {
 
             Tensor<T> result(this->shapes_, static_cast<T>(0));
 
-            for (size_t i = 0; i < this->size_; i++) {
+            for (size_t i = 0; i < this->size(); i++) {
                 result.data_[i] = this->data_[i] == other.data_[i];
             }
 
@@ -434,7 +434,7 @@ class Tensor {
                 throw runtime_error("Shape mismatch");
             }
 
-            for (size_t i = 0; i < this->size_; i++) {
+            for (size_t i = 0; i < this->size(); i++) {
                 if (this->data_[i] != other.data_[i]) {
                     return false;
                 }
@@ -549,9 +549,13 @@ class Tensor {
             return this->shapes_.size();
         }
 
+        inline const size_t size() const {
+            return this->data_.size();
+        }
+        
+
         inline const vector<size_t>& shapes() const { return this->shapes_; }
 
-        inline const size_t size() const { return this->size_; }
 
         inline void print() const { printRecursive(0, 0); }
 
