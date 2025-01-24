@@ -7,8 +7,13 @@ More functionalities to come.
 -   [x] ReLU activation
 -   [x] Mean Squared Error loss
 -   [x] Cross Entropy loss
+-   [x] Accuracy Metric
 -   [] Convolutional layer
 -   [] Pooling layer
--   [] Transformer layer
--   [] Recurrent layer
+-   [] Attention layer
+-   [] LayerNorm layer
 -   [] Embedding layer
+-   [] Transformer layer
+-   [] AutoEncoder
+-   [] Recurrent layer
+-   [] **CUDA Support**
