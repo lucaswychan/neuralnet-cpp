@@ -1,7 +1,12 @@
 #pragma once
+#include <iostream>
 #include <vector>
 #include <algorithm>
 #include <stdexcept>
+#include <variant>
+#include <string>
+#include <sstream>
+#include <functional>
 
 using namespace std;
 
@@ -58,6 +63,48 @@ enum class ArithmeticOp {
     SUB,
     MUL,
     DIV
+};
+
+// Slice struct to handle Python-like slicing
+struct Slice {
+    int start;
+    int stop;
+    int step;
+    
+    Slice(int start_ = 0, int stop_ = -1, int step_ = 1)
+        : start(start_), stop(stop_), step(step_) {}
+    
+    static Slice parse(const std::string& slice_str) {
+        Slice result;
+        std::istringstream ss(slice_str);
+        std::string token;
+        std::vector<int> values;
+        
+        while (std::getline(ss, token, ':')) {
+            if (token.empty()) {
+                values.push_back(-1);
+            } else {
+                values.push_back(std::stoi(token));
+            }
+        }
+        
+        switch (values.size()) {
+            case 2:
+                result.start = values[0] == -1 ? 0 : values[0];
+                result.stop = values[1] == -1 ? INT_MAX : values[1];
+                break;
+            case 3:
+                result.start = values[0] == -1 ? 0 : values[0];
+                result.stop = values[1] == -1 ? INT_MAX : values[1];
+                result.step = values[2] == -1 ? 1 : values[2];
+                break;
+            default:
+                throw std::invalid_argument("Invalid slice format");
+        }
+        
+        cout << "start: " << result.start << " stop: " << result.stop << " step: " << result.step << endl;
+        return result;
+    }
 };
 
 // ================================================definition================================================
