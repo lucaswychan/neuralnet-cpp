@@ -62,28 +62,7 @@ Run the example:
 
 I implemented a tensor from scratch as well and integrate it to my neural network implementation. The detailed implementation of `Tensor` can be found in [`include/core/tensor.hpp`](include/core/tensor.hpp).
 
-`Tensor` provides a lot of useful methods such as `add`, `sub`, `mul`, `div`, `matmul`, `transpose`, etc. You can find the detailed documentation in [`include/core/tensor.hpp`](include/core/tensor.hpp).
-
-Note that `Tensor` currently only supports up to 3-dimensional vectors.
-
-### Example usage
-
-```cpp
-#include "tensor.hpp"
-
-// default type is double
-Tensor<> your_tensor = { { 1.2, 2.3, 3.4 }, { 4.5, 5.6, 6.7 } }; // shape: (2, 3)
-
-// Or you can create a tensor with a specific type
-Tensor<int> your_int_tensor = { { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } } // shape: (3, 3);
-
-// Lots of operations are supported, including element-wise operations, matrix multiplication, etc.
-Tensor<> transposed_tensor = your_tensor.transpose(); // shape: (3, 2)
-
-// You can also create a tensor from a vector
-vector<vector<double>> your_vec = { { 1.2, 2.3, 3.4 }, { 4.5, 5.6, 6.7 } };
-Tensor<> your_tensor_from_vec = Tensor<>(your_vec);
-```
+For more details about tensor, please refer to [tensor tutorial](docs/tensor.md).
 
 ## Module API
 
