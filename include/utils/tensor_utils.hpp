@@ -8,6 +8,7 @@
 #include <sstream>
 #include <functional>
 #include <climits>
+#include <cstdint>
 
 using namespace std;
 
