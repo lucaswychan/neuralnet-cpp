@@ -509,6 +509,24 @@ class Tensor {
         Tensor<U> dtype() const {
             return dtype_impl<T, U>(*this);
         }
+
+        /// @brief Reshape the tensor to the specified new shape.
+        /// @details This function changes the shape of the tensor without altering the data.
+        /// The total number of elements must remain the same; otherwise, an exception is thrown.
+        /// @param new_shape The desired shape for the tensor.
+        /// @throws runtime_error if the new shape is not compatible with the current number of elements.
+        void reshape(const vector<size_t>& new_shape) {
+            size_t new_size = 1;
+            for (const size_t& dim : new_shape) {
+                new_size *= dim;
+            }
+
+            if (new_size != this->size()) {
+                throw runtime_error("New shape must be compatible with the original shape");
+            }
+
+            this->shapes_ = new_shape;
+        }
         
         // Get the dimension of the tensor
         inline size_t ndim() const {
@@ -591,67 +609,25 @@ class Tensor {
         using IndexType = variant<size_t, string, Slice>;
         Tensor<T> index(const vector<IndexType>& indices) const {
             vector<vector<size_t>> expanded_indices;
-            int ellipsis_pos = -1;
             
             // Handle ellipsis and expand slices
             // cout << "Start expanding indices" << endl;
             for (size_t i = 0; i < indices.size(); ++i) {
-                // cout << "Index: " << i << endl;
                 const auto& idx = indices[i];
-                
-                if (holds_alternative<string>(idx)) {
-                    // cout << "Inside string" << endl;
-                    const string& str_idx = get<string>(idx);
-                    if (str_idx == "...") {
-                        if (ellipsis_pos != -1) {
-                            throw std::invalid_argument("Only one ellipsis allowed");
-                        }
-                        ellipsis_pos = i;
-                    } 
-                    else if (str_idx == "None") {
-                        expanded_indices.push_back({static_cast<size_t>(-1)}); // -1 represents None/newaxis
-                    } 
-                    else {
-                        // Handle slice
-                        Slice slice = Slice::parse(str_idx);
-                        expanded_indices.push_back(apply_slice(slice, this->shapes_[i]));
-                    }
+
+                if (auto str_idx = get_if<string>(&idx)) {
+                    Slice slice = Slice::parse(*str_idx);
+                    expanded_indices.push_back(apply_slice(slice, this->shapes_[i]));
                 } 
-                else if (holds_alternative<size_t>(idx)) {
-                    // cout << "Inside size_t" << endl;
-                    expanded_indices.push_back({normalize_index(get<size_t>(idx), this->shapes_[i])});
+                else if (auto int_idx = get_if<size_t>(&idx)) {
+                    expanded_indices.push_back({normalize_index(*int_idx, this->shapes_[i])});
                 } 
-                else if (holds_alternative<Slice>(idx)) {
-                    // cout << "Inside Slice" << endl;
-                    expanded_indices.push_back(apply_slice(get<Slice>(idx), this->shapes_[i]));
+                else if (auto slice_idx = get_if<Slice>(&idx)) {
+                    expanded_indices.push_back(apply_slice(*slice_idx, this->shapes_[i]));
                 }
                 else {
                     throw std::invalid_argument("Invalid index type");
                 }
-            }
-            
-            // Handle ellipsis
-            if (ellipsis_pos != -1) {
-                size_t missing_dims = this->shapes_.size() - (indices.size() - 1);
-                vector<vector<size_t>> new_expanded_indices;
-                
-                for (size_t i = 0; i < ellipsis_pos; ++i) {
-                    new_expanded_indices.push_back(expanded_indices[i]);
-                }
-                
-                for (size_t i = 0; i < missing_dims; ++i) {
-                    vector<size_t> full_range;
-                    for (size_t j = 0; j < this->shapes_[ellipsis_pos + i]; ++j) {
-                        full_range.push_back(j);
-                    }
-                    new_expanded_indices.push_back(full_range);
-                }
-                
-                for (size_t i = ellipsis_pos + 1; i < expanded_indices.size(); ++i) {
-                    new_expanded_indices.push_back(expanded_indices[i]);
-                }
-                
-                expanded_indices = std::move(new_expanded_indices);
             }
             
             // Calculate new dimensions
