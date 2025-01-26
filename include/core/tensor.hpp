@@ -406,7 +406,7 @@ class Tensor {
 
         /// @brief Filter the tensor with the given function
         /// @param func a function to test each element of the tensor. It should return true if the element passes the test
-        /// @return a new tensor with the same shape as the original, but all elements that fail the test are set to 0
+        /// @return a new tensor with the same shape as the original, but all elements that fail the test are set to 0.
         Tensor<T> filter(bool (*func)(T)) const {
             Tensor<T> result(this->shapes_, static_cast<T>(0));
 
@@ -415,11 +415,12 @@ class Tensor {
                     result.data_[i] = this->data_[i];
                 }
             }
+
             return result;
         }
 
         /// @brief Perform element-wise transformation with a function
-        /// @param func a function perform element-wise transformation to the tensor
+        /// @param func a function to perform element-wise transformation to the tensor
         /// @return a new tensor with the same shape as the original, but with each element transformed by the given func
         Tensor<T> map(T (*func)(T)) const {
             Tensor<T> result(this->shapes_, static_cast<T>(0));
@@ -427,6 +428,7 @@ class Tensor {
             for (size_t i = 0; i < this->size(); i++) {
                 result.data_[i] = func(this->data_[i]);
             }
+
             return result;
         }
 
