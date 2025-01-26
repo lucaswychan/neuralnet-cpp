@@ -10,21 +10,20 @@ class Tensor {
     private:
         vector<T> data_; // data is stored as a 1D vector
         vector<size_t> shapes_; // store the dimensions of the tensor
-        mutable size_t cached_size_ = 0; // store the number of elements in the tensor
 
         // Helper function to calculate the index in the 1D vector for a given set of indices expressed in the form of N-D vector
-        size_t calculateIndex(const vector<size_t>& idxs) const {
-            size_t index = 0;
+        size_t calculate_idx(const vector<size_t>& idxs) const {
+            size_t idx = 0;
             size_t multiplier = 1;
             for (size_t i = this->ndim(); i-- > 0;) {
-                index += idxs[i] * multiplier;
+                idx += idxs[i] * multiplier;
                 multiplier *= this->shapes_[i];
             }
-            return index;
+            return idx;
         }
 
         // Helper function for printing since we don't know the number of dimensions
-        void printRecursive(size_t dim, size_t offset) const {
+        void print_recursive(size_t dim, size_t offset) const {
             if (dim == this->ndim() - 1) { // Last dimension
                 cout << "[";
                 for (size_t i = 0; i < this->shapes_[dim]; ++i) {
@@ -39,7 +38,7 @@ class Tensor {
                     stride *= this->shapes_[i];
                 }
                 for (size_t i = 0; i < this->shapes_[dim]; ++i) {
-                    printRecursive(dim + 1, offset + i * stride);
+                    print_recursive(dim + 1, offset + i * stride);
                     if (i < this->shapes_[dim] - 1) cout << ", " << endl;
                 }
                 cout << "]" << endl;
@@ -48,19 +47,31 @@ class Tensor {
 
         // Helper function for operator[] overloading
         template<typename... Indices>
-        const vector<size_t> getIdxs(Indices... indices) const {
+        const vector<size_t> get_idxs(Indices... indices) const {
             // Convert variadic arguments to vector
-            vector<size_t> idxs({static_cast<size_t>(indices)...});
+            vector<int> idxs({static_cast<int>(indices)...});
+            vector<size_t> normalized_idxs;
+
+            // for better performance, reserve the size of the vector
+            normalized_idxs.reserve(idxs.size());
 
             // Check bounds
             for (size_t i = 0; i < idxs.size(); ++i) {
-                if (idxs[i] < 0 || idxs[i] >= this->shapes_[i]) {
-                    throw std::out_of_range("Tensor: Index out of bounds");
-                }
+                size_t normalized_idx = this->normalize_index(idxs[i], this->shapes_[i]);
+                normalized_idxs.push_back(normalized_idx);
             }
 
-            return idxs;
+            return normalized_idxs;
         }
+
+        /**
+         * Reduces a 1D or 2D tensor along its rows using the specified reduction operation.
+         *
+         * @tparam U The data type of the resulting tensor. Defaults to the type of the current tensor.
+         * @param op The reduction operation to perform. Supported operations are MAX, MIN, ARGMAX, and ARGMIN.
+         * @return A Tensor<U> of shape (num_rows, 1) containing the reduced values or indices.
+         * @throws runtime_error if the tensor's number of dimensions is greater than 2.
+         */
 
         template <typename U = T>
         Tensor<U> reduce(ReduceOp op) const {        
@@ -147,25 +158,25 @@ class Tensor {
         }
 
         // Helper function to convert negative indices to positive
-        size_t normalize_index(size_t idx, size_t dim_size) const {
+        size_t normalize_index(int idx, size_t dim_size) const {
             if (idx < 0) idx += dim_size;
-            cout << "dix in normalize_index: " << idx << endl;
-            if (idx < 0 || idx > dim_size) {
-                throw std::out_of_range("Index out of bounds");
+            if (idx < 0 || idx >= dim_size) {
+                throw std::out_of_range("Index out of bounds after index normalization");
             }
             return idx;
         }
 
         // Helper function to apply slice to a dimension
-        std::vector<size_t> apply_slice(const Slice& slice, size_t dim_size) const {
-            std::vector<size_t> indices;
+        vector<size_t> apply_slice(const Slice& slice, size_t dim_size) const {
+            vector<size_t> indices;
+            // cout << "In apply_slice, start: " << slice.start << " stop: " << slice.stop << " step: " << slice.step << endl;
             size_t start = normalize_index(slice.start, dim_size);
-            size_t stop = slice.stop == INT_MAX ? dim_size : normalize_index(slice.stop, dim_size);
+            size_t stop = slice.stop == INT_MAX ? dim_size : normalize_index(slice.stop - 1, dim_size) + 1;
             size_t step = slice.step;
             
-            cout << "start applying slice" << endl;
+            // cout << "start applying slice" << endl;
             for (size_t i = start; i < stop; i += step) {
-                cout << "i: " << i << endl;
+                // cout << "i: " << i << endl;
                 indices.push_back(i);
             }
             return indices;
@@ -511,7 +522,7 @@ class Tensor {
 
         inline const vector<size_t>& shapes() const { return this->shapes_; }
 
-        inline void print() const { printRecursive(0, 0); }
+        inline void print() const { print_recursive(0, 0); }
 
         // ========================================operators overloading========================================
         inline Tensor<T> operator+(const Tensor<T>& other) const { return this->add(other); }
@@ -544,43 +555,53 @@ class Tensor {
         // lvalue operator overloading
         template<typename... Indices>
         T& operator[](Indices... indices) {
-            // ((cout << ',' << std::forward<Indices>(indices)), ...);
-            // cout << endl;
-
-            vector<size_t> idxs = this->getIdxs(indices...);
-            return this->data_[calculateIndex(idxs)]; 
+            vector<size_t> idxs = this->get_idxs(indices...);
+            return this->data_[calculate_idx(idxs)]; 
         }
 
         T& operator[](const vector<size_t>& indices) {
-            return this->data_[calculateIndex(indices)]; 
+            return this->data_[calculate_idx(indices)]; 
         }
 
         // rvalue operator overloading
         template<typename... Indices>
         const T& operator[](Indices... indices) const {
-            vector<size_t> idxs = this->getIdxs(indices...);
-            return this->data_[calculateIndex(idxs)]; 
+            vector<size_t> idxs = this->get_idxs(indices...);
+            return this->data_[calculate_idx(idxs)]; 
         }
 
         const T& operator[](const vector<size_t>& indices) const {
-            return this->data_[calculateIndex(indices)]; 
+            return this->data_[calculate_idx(indices)]; 
         }
 
-
-        using IndexType = std::variant<size_t, std::string, Slice>;
-        Tensor<T> index(const std::vector<IndexType>& indices) const {
-            std::vector<std::vector<size_t>> expanded_indices;
+        /**
+         * @brief Advanced indexing using a combination of integers, strings, and slices.
+         * 
+         * This function allows for flexible indexing into the tensor, similar to Python's
+         * advanced indexing. It supports integer indices, string-based slices, and the ellipsis
+         * ("...") for automatic dimension completion. The function expands slices and handles
+         * ellipsis to generate the appropriate sub-tensor.
+         * 
+         * @param indices A vector of indices where each index can be an integer, a string
+         *                representing a slice, or a special ellipsis ("...").
+         * @return A new tensor that is indexed from the current tensor according to the given indices.
+         * 
+         * @throw std::invalid_argument if an index type is invalid or if more than one ellipsis is used.
+         */
+        using IndexType = variant<size_t, string, Slice>;
+        Tensor<T> index(const vector<IndexType>& indices) const {
+            vector<vector<size_t>> expanded_indices;
             int ellipsis_pos = -1;
             
             // Handle ellipsis and expand slices
-            cout << "Start expanding indices" << endl;
+            // cout << "Start expanding indices" << endl;
             for (size_t i = 0; i < indices.size(); ++i) {
-                cout << "Index: " << i << endl;
+                // cout << "Index: " << i << endl;
                 const auto& idx = indices[i];
                 
-                if (std::holds_alternative<std::string>(idx)) {
-                    cout << "Inside string" << endl;
-                    const std::string& str_idx = std::get<std::string>(idx);
+                if (holds_alternative<string>(idx)) {
+                    // cout << "Inside string" << endl;
+                    const string& str_idx = get<string>(idx);
                     if (str_idx == "...") {
                         if (ellipsis_pos != -1) {
                             throw std::invalid_argument("Only one ellipsis allowed");
@@ -596,13 +617,13 @@ class Tensor {
                         expanded_indices.push_back(apply_slice(slice, this->shapes_[i]));
                     }
                 } 
-                else if (std::holds_alternative<size_t>(idx)) {
-                    cout << "Inside size_t" << endl;
-                    expanded_indices.push_back({normalize_index(std::get<size_t>(idx), this->shapes_[i])});
+                else if (holds_alternative<size_t>(idx)) {
+                    // cout << "Inside size_t" << endl;
+                    expanded_indices.push_back({normalize_index(get<size_t>(idx), this->shapes_[i])});
                 } 
-                else if (std::holds_alternative<Slice>(idx)) {
-                    cout << "Inside Slice" << endl;
-                    expanded_indices.push_back(apply_slice(std::get<Slice>(idx), this->shapes_[i]));
+                else if (holds_alternative<Slice>(idx)) {
+                    // cout << "Inside Slice" << endl;
+                    expanded_indices.push_back(apply_slice(get<Slice>(idx), this->shapes_[i]));
                 }
                 else {
                     throw std::invalid_argument("Invalid index type");
@@ -612,14 +633,14 @@ class Tensor {
             // Handle ellipsis
             if (ellipsis_pos != -1) {
                 size_t missing_dims = this->shapes_.size() - (indices.size() - 1);
-                std::vector<std::vector<size_t>> new_expanded_indices;
+                vector<vector<size_t>> new_expanded_indices;
                 
                 for (size_t i = 0; i < ellipsis_pos; ++i) {
                     new_expanded_indices.push_back(expanded_indices[i]);
                 }
                 
                 for (size_t i = 0; i < missing_dims; ++i) {
-                    std::vector<size_t> full_range;
+                    vector<size_t> full_range;
                     for (size_t j = 0; j < this->shapes_[ellipsis_pos + i]; ++j) {
                         full_range.push_back(j);
                     }
@@ -634,7 +655,7 @@ class Tensor {
             }
             
             // Calculate new dimensions
-            std::vector<size_t> new_dims;
+            vector<size_t> new_dims;
             for (const vector<size_t>& expanded_idx : expanded_indices) {
                 if (expanded_idx[0] != -1) { // Not None/newaxis
                     if (expanded_idx.size() > 1) {
@@ -646,21 +667,21 @@ class Tensor {
                 }
             }
 
-            cout << "Start printing new_dims" << endl;
-            cout << "new_dims size: " << new_dims.size() << endl;
-            for (size_t i = 0; i < new_dims.size(); ++i) {
-                cout << new_dims[i] << " ";
-            }
+            // cout << "Start printing new_dims" << endl;
+            // cout << "new_dims size: " << new_dims.size() << endl;
+            // for (size_t i = 0; i < new_dims.size(); ++i) {
+            //     cout << new_dims[i] << " ";
+            // }
             
             // Create result tensor
             Tensor<T> result(new_dims, static_cast<T>(0));
             
             // Fill result tensor
-            std::vector<size_t> current_indices(expanded_indices.size());
-            std::vector<size_t> result_indices;
+            vector<size_t> current_indices(expanded_indices.size());
+            vector<size_t> result_indices;
             
             // Recursive lambda to fill result tensor
-            std::function<void(size_t)> fill_tensor = [&](size_t depth) {
+            function<void(size_t)> fill_tensor = [&](size_t depth) {
                 if (depth == expanded_indices.size()) {
                     result_indices.clear();
                     for (int i = 0; i < expanded_indices.size(); ++i) {
@@ -669,7 +690,7 @@ class Tensor {
                         }
                     }
                     
-                    std::vector<size_t> original_indices;
+                    vector<size_t> original_indices;
                     for (int i = 0; i < expanded_indices.size(); ++i) {
                         if (expanded_indices[i][0] != -1) {
                             original_indices.push_back(expanded_indices[i][current_indices[i]]);
