@@ -7,6 +7,7 @@
 #include <string>
 #include <sstream>
 #include <functional>
+#include <climits>
 
 using namespace std;
 
