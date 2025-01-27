@@ -1,5 +1,6 @@
 #pragma once
 #include "loss.hpp"
+#include "softmax.hpp"
 
 namespace nn {
 
@@ -11,6 +12,7 @@ class CrossEntropyLoss : public Loss {
 
     private:
         Tensor<> softmax_Y_hat_cache_;
+        Softmax softmax_;
     };
 
 }

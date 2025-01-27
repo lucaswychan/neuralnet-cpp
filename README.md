@@ -4,7 +4,7 @@
 ![C++ Unit Tests](https://github.com/lucaswychan/neuralnet-cpp/actions/workflows/cpp_test.yaml/badge.svg)
 [![GitHub license badge](https://img.shields.io/github/license/lucaswychan/neural-stock-prophet?color=blue)](https://opensource.org/licenses/MIT)
 
-Neural Network in pure C++ without PyTorch and TensorFlow.
+This is a PyTorch-like neural network framework in pure C++ from scratch, using only C++ STL.
 
 Currently supports:
 
@@ -18,7 +18,8 @@ More to come.
 
 **Current achievements: achieving 95% accuracy on MNIST.**
 
-> It would be great if you could [star](https://github.com/lucaswychan/neuralnet-cpp) this project on GitHub. Discussion and suggestions are more welcome!
+> [!NOTE]
+> To support and foster the growth of the project, you could ⭐ [star](https://github.com/lucaswychan/neuralnet-cpp) this project on GitHub. Discussion and suggestions are more welcome!
 
 ## Get Started
 
@@ -73,7 +74,11 @@ To build your custom module, follow the instructions in `include/core/module.hpp
 ### Example usage
 
 ```cpp
-class MyModule : public nn::Module {
+#include <module.hpp>
+using namespace nn;
+
+// Your code here
+class MyModule : public Module {
     public:
         virtual Tensor<> forward(const Tensor<>& input) override {
             // Your code here

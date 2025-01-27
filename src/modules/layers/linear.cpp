@@ -49,7 +49,7 @@ Tensor<> Linear::backward(const Tensor<>& grad_output) {
     // dL/dW = X^T * dL/dY
     this->grad_weights_ = this->input_cache_.transpose().matmul(grad_output);
 
-    // cout << "dL/dW: " << endl;
+    // cout << endl << "dL/dW: " << endl;
     // this->grad_weights_.print();
     // cout << endl;
 
@@ -63,7 +63,7 @@ Tensor<> Linear::backward(const Tensor<>& grad_output) {
     if (this->bias_) 
         this->grad_biases_ = grad_output.transpose().matmul(Tensor<>({grad_output.shapes()[0], 1}, 1.0f));
 
-    // cout << "dL/db: " << endl;
+    // cout << endl << "dL/db: " << endl;
     // this->grad_biases_.print();
     // cout << endl;
 

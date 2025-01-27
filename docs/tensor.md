@@ -1,8 +1,9 @@
 # Tensor Tutorial
 
-`Tensor` provides a lot of useful methods such as `add`, `sub`, `mul`, `div`, `matmul`, `dtype`, etc. You can find the detailed documentation in [`include/core/tensor.hpp`](include/core/tensor.hpp).
+`Tensor` provides a lot of useful methods such as `add`, `sub`, `mul`, `div`, `matmul`, `dtype`, etc. You can find the detailed documentation and implementation in [`include/core/tensor.hpp`](../include/core/tensor.hpp).
 
-Note that `Tensor` currently only supports up to 3-dimensional vectors.
+> [!NOTE]
+> Currently, `Tensor` only supports up to 3-dimensional vectors. In the future, `Tensor` will support higher-dimensional vectors.
 
 **Guide :**
 
@@ -16,8 +17,9 @@ Note that `Tensor` currently only supports up to 3-dimensional vectors.
 -   [Filter the unwanted elements](#filter-the-unwanted-elements)
 -   [Perform function mapping](#perform-function-mapping)
 -   [Max, Min, Argmax, Argmin](#max-min-argmax-argmin)
+-   [Flatten tensor](#flatten-tensor)
 
-### Creteate a tensor
+## Creteate a tensor
 
 You can create your tensor from C++ array, or using `vector` in C++ STL. You can create a tensor with different variable type, even with your custom class.
 
@@ -193,13 +195,15 @@ Tensor<int> A_filtered = A.filter([](int x) { return x > 0; });
 Function mapping also can be applied to the tensor, simply by using `map`. It takes a function as argument to perform element-wise transformation to the tensor.
 
 ```cpp
-Tensor<int> A = { { 1, 2, 3 },
-                  { 4, 5, 6 } }; // 2 x 3
+#include <math.h>
 
-Tensor<int> A_mapped = A.map([](int x) { return 5 * x; });
+Tensor<> A = { { 1, 2, 3 },
+               { 4, 5, 6 } }; // 2 x 3
+
+Tensor<> A_mapped = A.map([](double x) { return exp(x); });
 /*
-{ { 5, 10, 15 },
-  { 20, 25, 30 } }
+{ { 2.71828, 7.38906, 20.0855 },
+  { 54.5982, 148.413, 403.429 } }
 */
 ```
 
@@ -237,4 +241,16 @@ Tensor<int> tensor_1d_max = tensor_1d.min();
 
 Tensor<size_t> tensor_1d_argmax = tensor_1d.argmin();
 // { 0 }
+```
+
+## Flatten tensor
+
+You can flatten your tensor using `flatten` function. It returns a 1-D tensor.
+
+```cpp
+Tensor<int> A = { { 1, 2, 3 },
+                  { 4, 5, 6 } }; // 2 x 3
+
+Tensor<int> A_flatten = A.flatten();
+// { 1, 2, 3, 4, 5, 6 }
 ```

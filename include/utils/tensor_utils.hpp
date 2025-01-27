@@ -63,6 +63,10 @@ struct Slice {
                 is_empty.push_back(0);
             }
         }
+        if (values.size() == 1) {
+            values.push_back(-1);
+            is_empty.push_back(1);
+        }
 
         result.start = is_empty[0] == 1 ? 0 : values[0];
         result.stop = is_empty[1] == 1 ? INT_MAX : values[1];

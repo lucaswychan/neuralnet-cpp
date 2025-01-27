@@ -45,13 +45,15 @@ Tensor<> Softmax::forward(const Tensor<>& input) {
 }
 
 Tensor<> Softmax::backward(const Tensor<>& grad_output) {
-    Tensor<> grad(grad_output.shapes(), 0.0f);
+    // Tensor<> grad(grad_output.shapes(), 0.0f);
 
-    for (size_t i = 0; i < this->input_cache_.shapes()[0]; i++) {
-        for (size_t j = 0; j < this->input_cache_.shapes()[1]; j++) {
-            grad[i, j] = grad_output[i, j] * this->input_cache_[i, j];
-        }
-    }
+    // for (size_t i = 0; i < this->input_cache_.shapes()[0]; i++) {
+    //     for (size_t j = 0; j < this->input_cache_.shapes()[1]; j++) {
+    //         grad[i, j] = grad_output[i, j] * this->input_cache_[i, j];
+    //     }
+    // }
 
-    return grad;
+    // return grad;
+
+    return grad_output * this->input_cache_;
 }
