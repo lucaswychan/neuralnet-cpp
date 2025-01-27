@@ -63,6 +63,8 @@ struct Slice {
                 is_empty.push_back(0);
             }
         }
+
+        // handle the case of ":"
         if (values.size() == 1) {
             values.push_back(-1);
             is_empty.push_back(1);
