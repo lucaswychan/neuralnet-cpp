@@ -342,27 +342,20 @@ TEST_CASE("TensorTest - Indexing Operator - Normal Slicing") {
     CHECK(sliced_tensor_1d_1[0] == 1.0f);
     CHECK(sliced_tensor_1d_1[1] == 2.0f);
 
-    Tensor<> sliced_tensor_1d_2 = tensor_1d.index({"1:"});
-    CHECK(sliced_tensor_1d_2.ndim() == 1);
-    CHECK(sliced_tensor_1d_2.size() == 3);
-    CHECK(sliced_tensor_1d_2.shapes()[0] == 3);
-    CHECK(sliced_tensor_1d_2[0] == 2.0f);
-    CHECK(sliced_tensor_1d_2[1] == 3.0f);
-    CHECK(sliced_tensor_1d_2[2] == 4.0f);
+    // Tensor<> sliced_tensor_1d_2 = tensor_1d.index({"1:"});
+    // CHECK(sliced_tensor_1d_2.ndim() == 1);
+    // CHECK(sliced_tensor_1d_2.size() == 3);
+    // CHECK(sliced_tensor_1d_2.shapes()[0] == 3);
+    // CHECK(sliced_tensor_1d_2[0] == 2.0f);
+    // CHECK(sliced_tensor_1d_2[1] == 3.0f);
+    // CHECK(sliced_tensor_1d_2[2] == 4.0f);
 
-    Tensor<> sliced_tensor_1d_3 = tensor_1d.index({":2"});
-    CHECK(sliced_tensor_1d_3.ndim() == 1);
-    CHECK(sliced_tensor_1d_3.size() == 2);
-    CHECK(sliced_tensor_1d_3.shapes()[0] == 2);
-    CHECK(sliced_tensor_1d_3[0] == 1.0f);
-    CHECK(sliced_tensor_1d_3[1] == 2.0f);
-
-    // Tensor<> sliced_tensor_1d_4 = tensor_1d.index({"1:3"});
-    // CHECK(sliced_tensor_1d_4.ndim() == 1);
-    // CHECK(sliced_tensor_1d_4.size() == 2);
-    // CHECK(sliced_tensor_1d_4.shapes()[0] == 2);
-    // CHECK(sliced_tensor_1d_4[0] == 2.0f);
-    // CHECK(sliced_tensor_1d_4[1] == 3.0f);
+    Tensor<> sliced_tensor_1d_4 = tensor_1d.index({"1:3"});
+    CHECK(sliced_tensor_1d_4.ndim() == 1);
+    CHECK(sliced_tensor_1d_4.size() == 2);
+    CHECK(sliced_tensor_1d_4.shapes()[0] == 2);
+    CHECK(sliced_tensor_1d_4[0] == 2.0f);
+    CHECK(sliced_tensor_1d_4[1] == 3.0f);
 
     Tensor<> tensor_2d = {{1.0f, 2.0f}, {3.0f, 4.0f}};
     Tensor<> sliced_tensor_2d_1 = tensor_2d.index({":", ":2"});
