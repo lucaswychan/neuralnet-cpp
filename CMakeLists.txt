@@ -38,7 +38,6 @@ set(SOURCE_FILES
     src/modules/activations/relu.cpp
     src/modules/activations/softmax.cpp
     src/modules/losses/cross_entropy.cpp
-    src/utils/matrix_utils.cpp
     src/utils/tensor_utils.cpp
     src/datasets/mnist.cpp
     src/models/mlp.cpp
@@ -50,7 +49,7 @@ set(SOURCE_FILES
 add_library(neuralnet ${SOURCE_FILES})
 
 # Add the executable for the main example
-add_executable(main examples/main.cpp)
+add_executable(main examples/test_tensor.cpp)
 target_link_libraries(main neuralnet)
 
 # Only build tests if BUILD_TESTS is ON
