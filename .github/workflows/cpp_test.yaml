@@ -2,7 +2,7 @@ name: C++ Tests
 
 on:
     pull_request:
-        branches: [main] # Adjust this to match your main branch name
+        branches: [main]
 
 jobs:
     build-and-test:
@@ -16,14 +16,18 @@ jobs:
               with:
                   cmake-version: "3.20"
 
-            - name: Configure CMake
-              run: cmake -S . -B build -DBUILD_TESTS=ON
+            - name: Build Project
+              run: |
+                  mkdir build-tests
+                  cd build-tests
+                  cmake -DBUILD_TESTS=ON -Wno-dev ..
+                  make
 
-            - name: Build
-              run: cmake --build build
+            - name: Run C++ Unit Tests
+              run: |
+                  ctest --rerun-failed --output-on-failure
 
-            - name: make
-              run: make
-
-            - name: Run Tests
-              run: ctest --rerun-failed --output-on-failure
+            - name: Clean Up
+              run: |
+                  rm -rf build-tests
+                  echo "Cleaned up build directory"
