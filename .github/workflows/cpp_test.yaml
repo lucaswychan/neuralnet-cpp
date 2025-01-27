@@ -25,6 +25,7 @@ jobs:
 
             - name: Run C++ Unit Tests
               run: |
+                  cd build-tests
                   ctest --rerun-failed --output-on-failure
 
             - name: Clean Up
