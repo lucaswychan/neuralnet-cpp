@@ -21,7 +21,7 @@ int main() {
     const string mnist_label_file = "../data/mnist/train-labels.idx1-ubyte";
 
     // load MNIST data
-    if (!dataset.loadData(mnist_image_file, mnist_label_file)) {
+    if (!dataset.load_data(mnist_image_file, mnist_label_file)) {
         cerr << "Failed to load dataset" << endl;
         return 1;
     }
@@ -45,9 +45,9 @@ int main() {
         loss_list.clear();
         accuracy_list.clear();
         
-        for (size_t i = 0; i < dataset.getNumBatches(); i++) {
-            auto batch = dataset.getNextBatch();
-            auto [data, labels] = batch.toTensor();
+        for (size_t i = 0; i < dataset.get_num_batches(); i++) {
+            auto batch = dataset.get_next_batch();
+            auto [data, labels] = batch.to_tensor();
 
             // forward propagation
             Tensor<> output = model(data);
