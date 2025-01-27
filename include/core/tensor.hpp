@@ -76,7 +76,7 @@ class Tensor {
         template <typename U = T>
         Tensor<U> reduce(ReduceOp op) const {        
             if (this->ndim() > 2) {
-                throw runtime_error("Only 1D and 2D tensors are supported for reduce");
+                throw std::runtime_error("Only 1D and 2D tensors are supported for reduce");
             }
 
             const size_t num_rows = (this->ndim() == 2)? this->shapes_[0] : 1;
@@ -344,7 +344,7 @@ class Tensor {
 
         Tensor<T> transpose() const {
             if (this->ndim() > 2) {
-                throw runtime_error("Only 1D and 2D tensors are supported for transpose");
+                throw std::runtime_error("Only 1D and 2D tensors are supported for transpose");
             }
 
             // We want 1D vector to be transposed from 1xn to nx1
@@ -528,6 +528,8 @@ class Tensor {
             }
 
             this->shapes_ = new_shape;
+
+            return;
         }
         
         // Get the dimension of the tensor
