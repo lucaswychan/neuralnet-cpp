@@ -350,6 +350,11 @@ TEST_CASE("TensorTest - Indexing Operator - Normal Slicing") {
     CHECK(sliced_tensor_1d_2[1] == 3.0f);
     CHECK(sliced_tensor_1d_2[2] == 4.0f);
 
+    Tensor<> sliced_tensor_1d_3 = tensor_1d.index({":"});
+    CHECK(sliced_tensor_1d_3.ndim() == 1);
+    CHECK(sliced_tensor_1d_3.size() == 4);
+    CHECK(sliced_tensor_1d_3 == tensor_1d);
+
     Tensor<> sliced_tensor_1d_4 = tensor_1d.index({"1:3"});
     CHECK(sliced_tensor_1d_4.ndim() == 1);
     CHECK(sliced_tensor_1d_4.size() == 2);
