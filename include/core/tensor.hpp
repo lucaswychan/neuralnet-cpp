@@ -1,5 +1,4 @@
 #pragma once
-#include <iostream>
 #include <initializer_list>
 #include "tensor_utils.hpp"
 using namespace std;
@@ -161,7 +160,7 @@ class Tensor {
         size_t normalize_index(int idx, size_t dim_size) const {
             if (idx < 0) idx += dim_size;
             if (idx < 0 || idx >= dim_size) {
-                throw std::out_of_range("Index out of bounds after index normalization");
+                throw std::out_of_range("Index out of bounds after index normalization with index " + to_string(idx));
             }
             return idx;
         }
