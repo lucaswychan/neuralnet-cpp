@@ -1,45 +1,47 @@
 #include "mnist.hpp"
 
-bool MNIST::loadData(const string& imageFile, const string& labelFile) {
-    if (!readImages(imageFile) || !readLabels(labelFile)) {
+bool MNIST::load_data(const string& image_file, const string& label_file) {
+    if (!this->read_images(image_file) || !this->read_labels(label_file)) {
         return false;
     }
 
     // Calculate number of batches (ceiling division)
-    this->numBatches = (this->images.size() + this->batchSize - 1) / this->batchSize;
+    this->num_batches = (this->images.size() + this->batch_size - 1) / this->batch_size;
     
-    cout << "Dataset loaded successfully:\n";
-    cout << "Total images: " << images.size() << "\n";
-    cout << "Batch size: " << batchSize << "\n";
-    cout << "Number of batches: " << numBatches << "\n";
+    if (this->verbose) {
+        cout << "Dataset loaded successfully:\n";
+        cout << "Total images: " << images.size() << "\n";
+        cout << "Batch size: " << this->batch_size << "\n";
+        cout << "Number of batches: " << num_batches << "\n";
+    }
     
     return true;
 }
 
 
-Batch MNIST::getNextBatch() {
+Batch MNIST::get_next_batch() {
     Batch batch;
-    size_t startIdx = currentBatchIndex * batchSize;
-    size_t endIdx = std::min(startIdx + batchSize, this->images.size());
-    size_t actualBatchSize = endIdx - startIdx;
+    size_t start_idx = this->current_batch_idxs * this->batch_size;
+    size_t end_idx = std::min(start_idx + this->batch_size, this->images.size());
+    size_t actual_batch_size = end_idx - start_idx;
 
-    batch.batchData.resize(actualBatchSize);
-    batch.batchLabels.resize(actualBatchSize);
+    batch.batch_data.resize(actual_batch_size);
+    batch.batch_labels.resize(actual_batch_size);
 
     // Copy data for this batch
-    for (size_t i = 0; i < actualBatchSize; i++) {
-        batch.batchData[i] = this->images[startIdx + i];
-        batch.batchLabels[i] = this->oneHotEncoding(this->labels[startIdx + i]);
+    for (size_t i = 0; i < actual_batch_size; i++) {
+        batch.batch_data[i] = this->images[start_idx + i];
+        batch.batch_labels[i] = this->labels[start_idx + i]; // the labels are not one-hot encoded
     }
 
     // Update batch index
-    this->currentBatchIndex = (this->currentBatchIndex + 1) % this->numBatches;
+    this->current_batch_idxs = (this->current_batch_idxs + 1) % this->num_batches;
 
     return batch;
 }
 
 template<typename T>
-T MNIST::reverseInt(T value) {
+T MNIST::reverse_int(T value) {
     T result = 0;
     for(size_t i = 0; i < sizeof(T); i++) {
         result = (result << 8) | ((value >> (i * 8)) & 0xFF);
@@ -52,7 +54,7 @@ double MNIST::normalize(double value) {
     return (scaled - this->MNIST_MEAN) / this->MNIST_STD;
 }
 
-bool MNIST::readImages(const string& path) {
+bool MNIST::read_images(const string& path) {
     ifstream file(path, ios::binary);
     if(!file.is_open()) {
         cerr << "Failed to open file: " << path << endl;
@@ -66,10 +68,10 @@ bool MNIST::readImages(const string& path) {
     file.read(reinterpret_cast<char*>(&numRows), sizeof(numRows));
     file.read(reinterpret_cast<char*>(&numCols), sizeof(numCols));
 
-    magic = reverseInt(magic);
-    numImages = reverseInt(numImages);
-    numRows = reverseInt(numRows);
-    numCols = reverseInt(numCols);
+    magic = reverse_int(magic);
+    numImages = reverse_int(numImages);
+    numRows = reverse_int(numRows);
+    numCols = reverse_int(numCols);
 
     this->images.resize(numImages, vector<double>(numRows * numCols));
 
@@ -84,7 +86,7 @@ bool MNIST::readImages(const string& path) {
     return true;
 }
 
-bool MNIST::readLabels(const string& path) {
+bool MNIST::read_labels(const string& path) {
     ifstream file(path, ios::binary);
     if(!file.is_open()) {
         cerr << "Failed to open file: " << path << endl;
@@ -96,8 +98,8 @@ bool MNIST::readLabels(const string& path) {
     file.read(reinterpret_cast<char*>(&magic), sizeof(magic));
     file.read(reinterpret_cast<char*>(&numLabels), sizeof(numLabels));
 
-    magic = this->reverseInt(magic);
-    numLabels = this->reverseInt(numLabels);
+    magic = this->reverse_int(magic);
+    numLabels = this->reverse_int(numLabels);
 
     labels.resize(numLabels);
 
@@ -110,16 +112,10 @@ bool MNIST::readLabels(const string& path) {
     return true;
 }
 
-vector<int> MNIST::oneHotEncoding(const int& labels) {
-    vector<int> oneHotVector(this->MNIST_NUM_LABELS, 0);
-    oneHotVector[labels] = 1;
-    return oneHotVector;
-}
+tuple<Tensor<>, Tensor<>> Batch::to_tensor() {
+    Tensor<> data = this->batch_data;
 
-tuple<Tensor<>, Tensor<>> Batch::toTensor() {
-    Tensor<> data = this->batchData;
-
-    Tensor<int> labels_int = this->batchLabels;
+    Tensor<int> labels_int = this->batch_labels;
     Tensor<> labels = labels_int.dtype<double>();
     
     return make_tuple(data, labels);
