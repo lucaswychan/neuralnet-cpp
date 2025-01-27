@@ -22,5 +22,8 @@ jobs:
             - name: Build
               run: cmake --build build
 
+            - name: make
+              run: make
+
             - name: Run Tests
-              run: ctest
+              run: ctest --rerun-failed --output-on-failure
