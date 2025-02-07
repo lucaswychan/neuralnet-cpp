@@ -60,3 +60,12 @@ vector<size_t> apply_slice(const Slice& slice, size_t dim_size) {
     }
     return indices;
 }
+
+vector<size_t> linear_to_multi_idxs(size_t idx, const vector<size_t>& shape) {
+    vector<size_t> indices(shape.size());
+    for (int64_t i = shape.size() - 1; i >= 0; --i) {
+        indices[i] = idx % shape[i];
+        idx /= shape[i];
+    }
+    return indices;
+}
