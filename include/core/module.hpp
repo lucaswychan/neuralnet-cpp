@@ -10,6 +10,7 @@ namespace nn {
 
 class Module {
     public:
+        Module() = default;
         /**
          * Virtual destructor for the Module class.
          */

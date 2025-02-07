@@ -10,6 +10,7 @@ class Softmax : public Module {
         Tensor<> softmax_helper(const Tensor<>& input);
         vector<double> softmax_helper(const vector<double>& input);
     public:
+        Softmax();
         Tensor<> forward(const Tensor<>& input);
         Tensor<> backward(const Tensor<>& grad_output);
         const Tensor<>& get_softmax_input_cache() const { return this->softmax_input_cache_; }

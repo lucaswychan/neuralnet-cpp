@@ -2,6 +2,11 @@
 #include "softmax.hpp"
 using namespace nn;
 
+Softmax::Softmax() {
+    cout << "Starting Softmax" << endl;
+    cout << "Softmax initialized" << endl;
+}
+
 Tensor<> Softmax::softmax_helper(const Tensor<>& input) {
     Tensor<> result = input.map([](double x) { return exp(x); });
     double sum = result.sum();
