@@ -8,10 +8,11 @@ using namespace std;
 template <typename T = double>
 class Tensor {
     private:
-        shared_ptr<vector<T>> data_ = make_shared<vector<T>>(); // data is stored as a 1D vector // shared_ptr is used to avoid copying data
+        shared_ptr<vector<T>> data_ = nullptr; // data is stored as a 1D vector // shared_ptr is used to avoid copying data
         vector<size_t> shapes_; // store the dimensions of the tensor
         vector<size_t> strides_; // store the strides of the tensor
         size_t offset_ = 0; // offset for slicing
+        mutable int64_t size_ = -1; // it can be changed by const member functions (in size() function)
 
         // Helper function to calculate the index in the 1D vector for a given set of indices expressed in the form of N-D vector
         size_t calculate_idx(const vector<size_t>& idxs) const {
@@ -210,7 +211,7 @@ class Tensor {
 
     public:
         Tensor() = default;
-
+        
         // Helper to recursively flatten nested vectors and compute shapes
         template<typename V>
         void flatten_vector(const std::vector<V>& vec, size_t depth = 0) {
@@ -245,8 +246,9 @@ class Tensor {
             } else {
                 // Ensure leaf elements match the Tensor's data type
                 // static_assert(std::is_same_v<V, T>, "Element type must match Tensor type");
+                this->data_->reserve(this->data_->size() + vec.size());
                 for (const auto& elem : vec) {
-                    this->data_->push_back(static_cast<T>(elem));
+                    this->data_->emplace_back(static_cast<T>(elem));
                 }
             }
         }
@@ -254,6 +256,7 @@ class Tensor {
         // Constructor for nested vectors
         template<typename V>
         Tensor(const std::vector<V>& input) {
+            this->data_ = make_shared<vector<T>>();
             flatten_vector(input);
             this->calculate_strides();
         }
@@ -308,6 +311,7 @@ class Tensor {
 
             this->shapes_ = vector<size_t> { n, m };
 
+            this->data_ = make_shared<vector<T>>();
             this->data_->reserve(n * m);  // Optimize memory allocation
 
             for (const initializer_list<T>& row : data_2d) {
@@ -322,6 +326,7 @@ class Tensor {
 
             this->shapes_ = vector<size_t> { n, m, l };
 
+            this->data_ = make_shared<vector<T>>();
             this->data_->reserve(n * m * l);  // Optimize memory allocation
 
             for (const initializer_list<initializer_list<T>>& matrix : data_3d) {
@@ -338,6 +343,7 @@ class Tensor {
 
             this->shapes_ = vector<size_t> { n, m, l, k };
 
+            this->data_ = make_shared<vector<T>>();
             this->data_->reserve(n * m * l * k);  // Optimize memory allocation
 
             for (const initializer_list<initializer_list<initializer_list<T>>>& tensor : data_4d) {
@@ -351,14 +357,14 @@ class Tensor {
         }
 
         // certin value constructor
-        Tensor(const vector<size_t>& shape, const T& value) {
+        explicit Tensor(const vector<size_t>& shape, const T& value) {
             this->shapes_ = shape;
             size_t size = 1;
             for (const size_t& dim : shape) {
                 size *= dim;
             }
             
-            this->data_->resize(size, value);
+            this->data_ = make_shared<vector<T>>(size, value);
             this->calculate_strides();
         }
 
@@ -542,8 +548,8 @@ class Tensor {
             swap(result.shapes_[dim0], result.shapes_[dim1]);
             swap(result.strides_[dim0], result.strides_[dim1]);
 
-            cout << "result.shapes_: " << result.shapes_[0] << " " << result.shapes_[1] << endl;
-            cout << "result.strides_: " << result.strides_[0] << " " << result.strides_[1] << endl;
+            // cout << "result.shapes_: " << result.shapes_[0] << " " << result.shapes_[1] << endl;
+            // cout << "result.strides_: " << result.strides_[0] << " " << result.strides_[1] << endl;
 
             return result;
         }
@@ -720,11 +726,20 @@ class Tensor {
         }
 
         const size_t size() const {
-            size_t n = 1;
-            for (const size_t& s : this->shapes_) {
-                n *= s;
+            if (this->offset_ == 0) {
+                return this->data_->size();
             }
-            return n;
+
+            if (this->size_ != -1) {
+                return this->size_;
+            }
+
+            this->size_ = 1;
+            for (const size_t& s : this->shapes_) {
+                this->size_ *= s;
+            }
+
+            return this->size_;
         }
 
         /// @brief Print the tensor to console.
