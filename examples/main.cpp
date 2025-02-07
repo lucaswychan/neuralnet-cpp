@@ -29,13 +29,19 @@ int main() {
     // Initialize the model
     MLP model = MLP({784, 128, 64, 10}, DROPOUT_P);
 
+    cout << "Finished model initialization" << endl;
+
     // Define the loss function
     CrossEntropyLoss criterion = CrossEntropyLoss();
+
+    cout << "Finished loss initialization" << endl;
 
     double loss = 0.0;
     double acc = 0.0;
     vector<double> loss_list;
     vector<double> accuracy_list;
+
+    cout << "Training started..." << endl;
 
     // // Train the model
     // Example of iterating through all batches
