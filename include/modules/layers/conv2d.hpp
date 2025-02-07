@@ -11,15 +11,14 @@ class Conv2d : public Module {
         virtual void update_params(const float lr) override;
 
         Tensor<> convolution(const Tensor<>& input, const Tensor<> filter);
-        Tensor<> full_convolution(const Tensor<>& input, const Tensor<> filter);
     
     private:
-        int in_channels_;
-        int out_channels_;
-        int kernel_size_;
-        int stride_;
-        int padding_;
-        int dilation_;
+        int64_t in_channels_;
+        int64_t out_channels_;
+        tuple<int64_t, int64_t> kernel_size_;
+        tuple<int64_t, int64_t> stride_;
+        tuple<int64_t, int64_t> padding_;
+        tuple<int64_t, int64_t> dilation_;
         bool bias_;
         Tensor<> weights_;
         Tensor<> biases_;
