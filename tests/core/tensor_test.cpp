@@ -156,6 +156,22 @@ TEST_CASE("TensorTest - 3D Tensor Constructor from vector") {
     CHECK(tensor2[1, 1, 1] == 0.0f);
 }
 
+TEST_CASE("TensorTest - 4D Tensor Constructor from vector") {
+    vector<vector<vector<vector<double>>>> data = {{{{1.0f, 2.0f}, {3.0f, 4.0f}}, {{5.0f, 6.0f}, {7.0f, 8.0f}}}, {{{9.0f, 10.0f}, {11.0f, 12.0f}}, {{13.0f, 14.0f}, {15.0f, 16.0f}}}};
+    Tensor<> tensor = data;
+    CHECK(tensor.ndim() == 4);
+    CHECK(tensor.size() == 16);
+    CHECK(tensor.shapes()[0] == 2);
+    CHECK(tensor.shapes()[1] == 2);
+    CHECK(tensor.shapes()[2] == 2);
+    CHECK(tensor.shapes()[2] == 2);
+    CHECK(tensor[0, 0, 0, 0] == 1.0f);
+    CHECK(tensor[0, 0, 0, 1] == 2.0f);
+    CHECK(tensor[0, 0, 1, 0] == 3.0f);
+    CHECK(tensor[0, 0, 1, 1] == 4.0f);
+    CHECK(tensor[1, 1, 1, 1] == 16.0f);
+}
+
 TEST_CASE("TensorTest - Copy Constructor") {
     // 1D tensor
     Tensor<> tensor1 = {1.0f, 2.0f, 3.0f, 4.0f};
@@ -532,7 +548,7 @@ TEST_CASE("TensorTest - map") {
     CHECK(tensor_2d_times_10[1, 0] == 30.0f);
     CHECK(tensor_2d_times_10[1, 1] == 40.0f);
 
-    Tensor<> tensor_3d = {{{{1.0f, 2.0f}, {3.0f, 4.0f}}, {{5.0f, 6.0f}, {7.0f, 8.0f}}}};
+    Tensor<> tensor_3d = {{{1.0f, 2.0f}, {3.0f, 4.0f}}, {{5.0f, 6.0f}, {7.0f, 8.0f}}};
     Tensor<> tensor_3d_log = tensor_3d.map([](double x) { return log(x); });
     CHECK(tensor_3d_log.ndim() == 3);
     CHECK(tensor_3d_log.size() == 8);
@@ -589,4 +605,20 @@ TEST_CASE("TensorTest - equal") {
     CHECK(equal_tensor_3d[1, 0, 1] == 1);
     CHECK(equal_tensor_3d[1, 1, 0] == 1);
     CHECK(equal_tensor_3d[1, 1, 1] == 1);
+}
+
+TEST_CASE("TensorTest - Matrix Multiplication") {
+    Tensor<> tensor_2d_1 = {{1.0f, 2.0f}, {3.0f, 4.0f}};
+    Tensor<> transposed_tensor_2d_1 = tensor_2d_1.transpose();
+    Tensor<> matrix_multiplication_2d_1 = tensor_2d_1.matmul(transposed_tensor_2d_1);
+
+    CHECK(matrix_multiplication_2d_1.ndim() == 2);
+    CHECK(matrix_multiplication_2d_1.size() == 4);
+    CHECK(matrix_multiplication_2d_1.shapes()[0] == 2);
+    CHECK(matrix_multiplication_2d_1.shapes()[1] == 2);
+    CHECK(matrix_multiplication_2d_1[0, 0] == 5.0f);
+    CHECK(matrix_multiplication_2d_1[0, 1] == 11.0f);
+    CHECK(matrix_multiplication_2d_1[1, 0] == 11.0f);
+    CHECK(matrix_multiplication_2d_1[1, 1] == 25.0f);
+    
 }
