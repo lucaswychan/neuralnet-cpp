@@ -25,35 +25,32 @@ vector<double> Softmax::softmax_helper(const vector<double>& input) {
 
 // Only support 1D and 2D Tensors
 Tensor<> Softmax::forward(const Tensor<>& input) {
-    this->input_cache_ = input;
+    // In softmax case, we don't have to store the input as it is not used in the backward pass
+    // Instead, we store the softmax(input)
 
     if (input.ndim() == 1) {
         return this->softmax_helper(input);
     }
 
-    vector<vector<double>> result;
+    vector<vector<double>> softmax_input;
 
     for (size_t i = 0; i < input.shapes()[0]; i++) {
-        vector<double>sub_vector;
+        vector<double> input_row;
+        input_row.reserve(input.shapes()[1]);
+
         for (size_t j = 0; j < input.shapes()[1]; j++) {
-            sub_vector.push_back(input[i, j]);
+            input_row.push_back(input[i, j]);
         }
-        result.push_back(this->softmax_helper(sub_vector));
+        softmax_input.push_back(this->softmax_helper(input_row));
     }
 
-    return Tensor<>(result);
+    this->softmax_input_cache_ = Tensor<>(softmax_input);
+
+    return this->softmax_input_cache_;
 }
 
 Tensor<> Softmax::backward(const Tensor<>& grad_output) {
-    // Tensor<> grad(grad_output.shapes(), 0.0f);
+    Tensor<> softmax_grad;
 
-    // for (size_t i = 0; i < this->input_cache_.shapes()[0]; i++) {
-    //     for (size_t j = 0; j < this->input_cache_.shapes()[1]; j++) {
-    //         grad[i, j] = grad_output[i, j] * this->input_cache_[i, j];
-    //     }
-    // }
-
-    // return grad;
-
-    return grad_output * this->input_cache_;
+    return softmax_grad;
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include <initializer_list>
+#include <memory>
 #include "tensor_utils.hpp"
 using namespace std;
 
@@ -7,48 +8,53 @@ using namespace std;
 template <typename T = double>
 class Tensor {
     private:
-        vector<T> data_; // data is stored as a 1D vector
+        shared_ptr<vector<T>> data_ = make_shared<vector<T>>(); // data is stored as a 1D vector // shared_ptr is used to avoid copying data
         vector<size_t> shapes_; // store the dimensions of the tensor
+        vector<size_t> strides_; // store the strides of the tensor
+        size_t offset_ = 0; // offset for slicing
 
         // Helper function to calculate the index in the 1D vector for a given set of indices expressed in the form of N-D vector
         size_t calculate_idx(const vector<size_t>& idxs) const {
-            size_t idx = 0;
-            size_t multiplier = 1;
-            for (size_t i = this->ndim(); i-- > 0;) {
-                idx += idxs[i] * multiplier;
-                multiplier *= this->shapes_[i];
+            size_t idx = this->offset_;
+            for (size_t i = 0; i < idxs.size(); ++i) {
+                idx += idxs[i] * this->strides_[i];
             }
             return idx;
         }
 
         // Helper function for printing since we don't know the number of dimensions
-        void print_recursive(size_t dim, size_t offset) const {
+        void print_recursive_impl(size_t dim, size_t offset, int indent = 0) const {
+            const string indent_str(indent, ' ');
+
+            // Handle empty dimensions
+            if (this->shapes_[dim] == 0) {
+                cout << indent_str << "[]";
+                return;
+            }
+
+            cout << indent_str << "[";
+            
             if (dim == this->ndim() - 1) { // Last dimension
-                cout << "[";
                 for (size_t i = 0; i < this->shapes_[dim]; ++i) {
-                    cout << data_[offset + i];
+                    cout << (*this->data_)[offset + i * this->strides_[dim]];
                     if (i < this->shapes_[dim] - 1) cout << ", ";
                 }
-                cout << "]";
             } else {
-                cout << "[";
-                size_t stride = 1;
-                for (size_t i = dim + 1; i < this->ndim(); ++i) {
-                    stride *= this->shapes_[i];
-                }
+                cout << "\n";
                 for (size_t i = 0; i < this->shapes_[dim]; ++i) {
-                    print_recursive(dim + 1, offset + i * stride);
-                    if (i < this->shapes_[dim] - 1) cout << ", " << endl;
+                    print_recursive_impl(dim + 1, offset + i * this->strides_[dim], indent + 2);
+                    if (i < this->shapes_[dim] - 1) cout << ",\n";
                 }
-                cout << "]" << endl;
+                cout << "\n" << indent_str;
             }
+            cout << "]";
         }
 
         // Helper function for operator[] overloading
         template<typename... Indices>
         const vector<size_t> get_idxs(Indices... indices) const {
             // Convert variadic arguments to vector
-            vector<int> idxs({static_cast<int>(indices)...});
+            vector<int64_t> idxs({static_cast<int64_t>(indices)...});
             vector<size_t> normalized_idxs;
 
             // for better performance, reserve the size of the vector
@@ -56,7 +62,7 @@ class Tensor {
 
             // Check bounds
             for (size_t i = 0; i < idxs.size(); ++i) {
-                size_t normalized_idx = this->normalize_index(idxs[i], this->shapes_[i]);
+                size_t normalized_idx = normalize_index(idxs[i], this->shapes_[i]);
                 normalized_idxs.push_back(normalized_idx);
             }
 
@@ -73,7 +79,7 @@ class Tensor {
          */
 
         template <typename U = T>
-        Tensor<U> reduce(ReduceOp op) const {        
+        Tensor<U> reduce_impl(ReduceOp op) const {        
             if (this->ndim() > 2) {
                 throw std::runtime_error("Only 1D and 2D tensors are supported for reduce");
             }
@@ -89,7 +95,7 @@ class Tensor {
                 size_t start_idx = i * num_cols;
                 
                 // Initialize with first element in row
-                T extreme_val = this->data_[start_idx];
+                T extreme_val = (*this->data_)[start_idx];
                 size_t extreme_idx = 0;
                 
                 // Process remaining elements in the row
@@ -100,16 +106,16 @@ class Tensor {
                     switch (op) {
                         case ReduceOp::MAX:
                         case ReduceOp::ARGMAX:
-                            update = this->data_[curr_idx] > extreme_val;
+                            update = (*this->data_)[curr_idx] > extreme_val;
                             break;
                         case ReduceOp::MIN:
                         case ReduceOp::ARGMIN:
-                            update = this->data_[curr_idx] < extreme_val;
+                            update = (*this->data_)[curr_idx] < extreme_val;
                             break;
                     }
                     
                     if (update) {
-                        extreme_val = this->data_[curr_idx];
+                        extreme_val = (*this->data_)[curr_idx];
                         extreme_idx = j;
                     }
                 }
@@ -135,50 +141,67 @@ class Tensor {
                 throw runtime_error("Shape mismatch in arithmetic operation");
             }
 
+            size_t ndim = this->ndim();
+
             Tensor<T> result(this->shapes_, static_cast<T>(0));
 
+            // Precompute result's contiguous strides for index calculation
+            const vector<size_t>& result_strides = result.strides_;
+
             for (size_t i = 0; i < this->size(); i++) {
+                auto [a_offset, b_offset] = calculate_tensors_offsets(i, ndim, result_strides, other);
+
                 switch (op) {
                     case ArithmeticOp::ADD:
-                        result.data_[i] = this->data_[i] + other.data_[i];
+                        (*result.data_)[i] = (*this->data_)[a_offset] + (*other.data_)[b_offset];
                         break;
                     case ArithmeticOp::SUB:
-                        result.data_[i] = this->data_[i] - other.data_[i];
+                        (*result.data_)[i] = (*this->data_)[a_offset] - (*other.data_)[b_offset];
                         break;
                     case ArithmeticOp::MUL:
-                        result.data_[i] = this->data_[i] * other.data_[i];
+                        (*result.data_)[i] = (*this->data_)[a_offset] * (*other.data_)[b_offset];
                         break;
                     case ArithmeticOp::DIV:
-                        result.data_[i] = this->data_[i] / other.data_[i];
+                        (*result.data_)[i] = (*this->data_)[a_offset] / (*other.data_)[b_offset];
                         break;
                 }
             }
             return result;
         }
 
-        // Helper function to convert negative indices to positive
-        size_t normalize_index(int idx, size_t dim_size) const {
-            if (idx < 0) idx += dim_size;
-            if (idx < 0 || idx >= dim_size) {
-                throw std::out_of_range("Index out of bounds after index normalization with index " + to_string(idx));
+        // Helper function to cacluate the stride of the tensor
+        void calculate_strides() {
+            this->strides_.resize(this->ndim(), 0);
+            vector<size_t> strides(this->ndim());
+
+            int64_t stride = 1;
+
+            for (int64_t i = this->ndim() - 1; i >= 0; --i) {
+                this->strides_[i] = stride;
+                stride *= this->shapes_[i];
             }
-            return idx;
         }
 
-        // Helper function to apply slice to a dimension
-        vector<size_t> apply_slice(const Slice& slice, size_t dim_size) const {
-            vector<size_t> indices;
-            // cout << "In apply_slice, start: " << slice.start << " stop: " << slice.stop << " step: " << slice.step << endl;
-            size_t start = normalize_index(slice.start, dim_size);
-            size_t stop = slice.stop == INT_MAX ? dim_size : normalize_index(slice.stop - 1, dim_size) + 1;
-            size_t step = slice.step;
-            
-            // cout << "start applying slice" << endl;
-            for (size_t i = start; i < stop; i += step) {
-                // cout << "i: " << i << endl;
-                indices.push_back(i);
+        std::tuple<size_t, size_t> calculate_tensors_offsets(const size_t idx, const size_t ndim, const vector<size_t>& result_strides, const Tensor<T>& other) const {
+            vector<size_t> indices(ndim);
+
+            size_t remaining = idx;
+
+            for (int dim = 0; dim < ndim; ++dim) {
+                indices[dim] = remaining / result_strides[dim];
+                remaining %= result_strides[dim];
             }
-            return indices;
+
+            // Calculate offsets using original tensors' strides
+            size_t a_offset = this->offset_;
+            size_t b_offset = other.offset_;
+
+            for (int dim = 0; dim < ndim; ++dim) {
+                a_offset += indices[dim] * this->strides_[dim];
+                b_offset += indices[dim] * other.strides_[dim];
+            }
+
+            return {a_offset, b_offset};
         }
 
         // Declare friendship so that TensorView can access private members of Tensor
@@ -188,21 +211,95 @@ class Tensor {
     public:
         Tensor() = default;
 
+        // Helper to recursively flatten nested vectors and compute shapes
+        template<typename V>
+        void flatten_vector(const std::vector<V>& vec, size_t depth = 0) {
+            // Add current level's size to shapes
+            if (depth == this->shapes_.size()) {
+                // First encounter with this depth: record size
+                this->shapes_.push_back(vec.size());
+                
+            } 
+            else {
+                // Verify size matches the existing dimension
+                if (vec.size() != this->shapes_[depth]) {
+                    throw std::invalid_argument("Inconsistent shape at depth " + std::to_string(depth));
+                }
+            }
+
+            if constexpr (is_vector<V>::value) {
+                // Ensure nested vectors have consistent sizes at this level
+                if (!vec.empty()) {
+                    size_t expected_size = vec[0].size();
+                    for (const auto& elem : vec) {
+                        if (elem.size() != expected_size) {
+                            throw std::invalid_argument("Inconsistent shape in nested vectors");
+                        }
+                    }
+                }
+
+                // Recurse into nested vectors
+                for (const auto& elem : vec) {
+                    flatten_vector(elem, depth + 1);
+                }
+            } else {
+                // Ensure leaf elements match the Tensor's data type
+                // static_assert(std::is_same_v<V, T>, "Element type must match Tensor type");
+                for (const auto& elem : vec) {
+                    this->data_->push_back(static_cast<T>(elem));
+                }
+            }
+        }
+
+        // Constructor for nested vectors
+        template<typename V>
+        Tensor(const std::vector<V>& input) {
+            flatten_vector(input);
+            this->calculate_strides();
+        }
+
+        // // Recursive helper to process nested initializer lists
+        // template<typename U>
+        // void flatten_list(const std::initializer_list<U>& list, size_t depth = 0) {
+        //     // Handle the current dimension
+        //     if (depth == shapes_.size()) {
+        //         // First encounter with this depth: record size
+        //         shapes_.push_back(list.size());
+        //     } else {
+        //         // Verify size matches the existing dimension
+        //         if (list.size() != shapes_[depth]) {
+        //             throw std::invalid_argument("Inconsistent shape at depth " + std::to_string(depth));
+        //         }
+        //     }
+
+        //     // Recurse or add data
+        //     if constexpr (is_list<U>::value) {
+        //         // Process nested lists
+        //         for (const auto& elem : list) {
+        //             flatten_list(elem, depth + 1);
+        //         }
+        //     } else {
+        //         // Ensure element type matches Tensor type
+        //         // static_assert(std::is_same_v<U, T>, "Element type must match Tensor type");
+        //         for (const auto& elem : list) {
+        //             data_.push_back(static_cast<T>(elem));
+        //         }
+        //     }
+        // }
+
+
         // Scaler constructor
         Tensor(const T& value) {
             this->shapes_ = vector<size_t> {1};
-            this->data_ = vector<T>(1, value);
+            this->data_ = make_shared<vector<T>>(1, value);
+            this->calculate_strides();
         }
 
         // 1D tensor constructor
         Tensor(const initializer_list<T>& data_1d) {
-            this->data_ = vector<T>(data_1d.begin(), data_1d.end());
+            this->data_ = make_shared<vector<T>>(data_1d.begin(), data_1d.end());
             this->shapes_ = vector<size_t> { data_1d.size() };
-        }
-
-        Tensor(const vector<T>& data_1d) {
-            this->data_ = data_1d;
-            this->shapes_ = vector<size_t> { data_1d.size() };
+            this->calculate_strides();
         }
 
         // 2D tensor constructor
@@ -211,21 +308,12 @@ class Tensor {
 
             this->shapes_ = vector<size_t> { n, m };
 
-            this->data_.reserve(n * m);  // Optimize memory allocation
+            this->data_->reserve(n * m);  // Optimize memory allocation
+
             for (const initializer_list<T>& row : data_2d) {
-                this->data_.insert(this->data_.end(), row.begin(), row.end());
+                this->data_->insert(this->data_->end(), row.begin(), row.end());
             }
-        }
-
-        Tensor(const vector<vector<T>>& data_2d) {
-            const size_t n = data_2d.size(), m = data_2d.begin()->size();
-
-            this->shapes_ = vector<size_t> { n, m };
-
-            this->data_.reserve(n * m);  // Optimize memory allocation
-            for (const vector<T>& row : data_2d) {
-                this->data_.insert(this->data_.end(), row.begin(), row.end());
-            }
+            this->calculate_strides();
         }
 
         // 3D tensor constructor
@@ -234,25 +322,32 @@ class Tensor {
 
             this->shapes_ = vector<size_t> { n, m, l };
 
-            this->data_.reserve(n * m * l);  // Optimize memory allocation
+            this->data_->reserve(n * m * l);  // Optimize memory allocation
+
             for (const initializer_list<initializer_list<T>>& matrix : data_3d) {
                 for (const initializer_list<T>& row : matrix) {
-                    this->data_.insert(this->data_.end(), row.begin(), row.end());
+                    this->data_->insert(this->data_->end(), row.begin(), row.end());
                 }
             }
+            this->calculate_strides();
         }
 
-        Tensor(const vector<vector<vector<T>>>& data_3d) {
-            const size_t n = data_3d.size(), m = data_3d.begin()->size(), l = data_3d.begin()->begin()->size();
+        // 4D tensor constructor
+        Tensor(const initializer_list<initializer_list<initializer_list<initializer_list<T>>>>& data_4d) {
+            const size_t n = data_4d.size(), m = data_4d.begin()->size(), l = data_4d.begin()->begin()->size(), k = data_4d.begin()->begin()->begin()->size();
 
-            this->shapes_ = vector<size_t> { n, m, l };
+            this->shapes_ = vector<size_t> { n, m, l, k };
 
-            this->data_.reserve(n * m * l);  // Optimize memory allocation
-            for (const vector<vector<T>>& matrix : data_3d) {
-                for (const vector<T>& row : matrix) {
-                    this->data_.insert(this->data_.end(), row.begin(), row.end());
+            this->data_->reserve(n * m * l * k);  // Optimize memory allocation
+
+            for (const initializer_list<initializer_list<initializer_list<T>>>& tensor : data_4d) {
+                for (const initializer_list<initializer_list<T>>& matrix : tensor) {
+                    for (const initializer_list<T>& row : matrix) {
+                        this->data_->insert(this->data_->end(), row.begin(), row.end());
+                    }
                 }
             }
+            this->calculate_strides();
         }
 
         // certin value constructor
@@ -262,12 +357,13 @@ class Tensor {
             for (const size_t& dim : shape) {
                 size *= dim;
             }
-            this->data_.resize(size, value);
+            
+            this->data_->resize(size, value);
+            this->calculate_strides();
         }
 
         // copy constructor
         Tensor(const Tensor<T>& other) {
-            // already overloading operator=
             *this = other;
         }
 
@@ -296,40 +392,115 @@ class Tensor {
             Tensor<T> result(this->shapes_, static_cast<T>(0));
 
             for (size_t i = 0; i < this->size(); i++) {
-                result.data_[i] = this->data_[i] * scaler;
+                (*result.data_)[i] = (*this->data_)[i] * scaler;
             }
             return result;
         }
 
-        /// @brief Matrix multiplication.
-        /// @details This function supports matrix multiplication between two 2D tensors.
-        /// The first tensor is of shape (n, m) and the second tensor is of shape (m, p).
-        /// The resulting tensor is of shape (n, p).
-        /// @param other The second tensor to multiply with.
-        /// @return A new tensor that is the result of the matrix multiplication.
+        
+        /**
+         * Matrix multiplication of two tensors.
+         *
+         * The two tensors must have at least two dimensions. The leading dimensions (all except last two) must be equal.
+         * The last two dimensions must match the matrix multiplication dimensions.
+         * For example, if the first tensor has shape [a, b, n, m] and the second tensor has shape [a, b, m, p], the result will have shape [a, b, n, p].
+         *
+         * The result is a tensor with the leading dimensions of the first tensor and the matrix multiplication result as the last two dimensions.
+         *
+         * The total number of batches is the product of the leading dimensions.
+         *
+         * The matrix multiplication is performed batched, i.e., for each batch, a matrix multiplication is performed.
+         *
+         * @param other The tensor to multiply with.
+         * @return The result of the matrix multiplication.
+         */
         Tensor<T> matmul(const Tensor<T>& other) const {
-            // this->data_ R^n x m, other.data_ R^m x p
-            const size_t n = this->shapes_[0], m = this->shapes_[1], p = other.shapes_[1];
+            // Ensure both tensors have at least 2 dimensions
+            size_t A_ndim = this->ndim(), B_ndim = other.ndim();
 
-            if (m != other.shapes_[0]) {
-                throw runtime_error("Shape mismatch in matrix multiplication");
-            }
-            if (this->ndim() != 2 || other.ndim() != 2) {
-                throw runtime_error("Only 2D tensors are supported for matrix multiplication");
+            if (A_ndim < 2 || B_ndim < 2) {
+                throw std::runtime_error("Tensors must have at least 2 dimensions for matrix multiplication");
             }
 
-            Tensor<T> result({ n, p }, static_cast<T>(0));
+            // Check leading dimensions (all except last two) are equal
+            const size_t A_leading_ndim = A_ndim - 2;
+            const size_t B_leading_ndim = B_ndim - 2;
 
-            for (size_t i = 0; i < n; i++) {
-                for (size_t j = 0; j < p; j++) {
-                    float sum = 0.0f;
-                    for (size_t k = 0; k < m; k++) {
-                        sum += this->data_[i * m + k] * other.data_[k * p + j];
+            if (A_leading_ndim != B_leading_ndim) {
+                throw std::runtime_error("Number of leading dimensions must match");
+            }
+
+            vector<size_t> A_leading_shape(this->shapes_.begin(), this->shapes_.end() - 2);
+            vector<size_t> B_leading_shape(other.shapes_.begin(), other.shapes_.end() - 2);
+
+            if (A_leading_shape != B_leading_shape) {
+                throw invalid_argument("Batch dimensions must match");
+            }
+
+            // Extract matrix dimensions
+            const size_t n = this->shapes_[A_ndim - 2];
+            const size_t m = this->shapes_[A_ndim - 1];
+            const size_t m_other = other.shapes_[B_ndim - 2];
+            const size_t p = other.shapes_[B_ndim - 1];
+
+            if (m != m_other) {
+                throw std::invalid_argument("Matrix dimension mismatch: last dimension of first tensor must match second last of second tensor");
+            }
+
+            // Determine result shape: leading dimensions + [n, p]
+            vector<size_t> result_shapes = A_leading_shape;
+            result_shapes.push_back(n);
+            result_shapes.push_back(p);
+
+            Tensor<T> result(result_shapes, static_cast<T>(0));
+
+            // Compute total number of batches (product of leading dimensions)
+            // may be we can use divisoin in stride to have O(1) time
+            size_t total_batches = 1;
+            for (const size_t& dim: A_leading_shape) {
+                total_batches *= dim;
+            }
+
+            for (size_t batch = 0; batch < total_batches; ++batch) {
+                // Get multi_dimensional indices for this batch
+                vector<size_t> indices = linear_to_multi_idxs(batch, A_leading_shape);
+
+                // Compute offsets for A, B, and result
+                size_t A_offset = this->offset_;
+                size_t B_offset = other.offset_;
+                size_t result_offset = 0;
+
+                for (size_t i = 0; i < A_leading_ndim; ++i) {
+                    A_offset += indices[i] * this->strides_[i];
+                    B_offset += indices[i] * other.strides_[i];
+                    result_offset += indices[i] * result.strides_[i];
+                }
+
+                for (size_t i = 0; i < n; ++i) {
+                    for (size_t j = 0; j < p; ++j) {
+                        T sum = static_cast<T>(0);
+
+                        for (size_t k = 0; k < m; ++k) {
+                            // Calculate offsets in A and B
+                            size_t a_idx = A_offset + 
+                                        i * this->strides_[A_leading_ndim] + 
+                                        k * this->strides_[A_leading_ndim + 1];
+                            
+                            size_t b_idx = B_offset + 
+                                        k * other.strides_[B_leading_ndim] + 
+                                        j * other.strides_[B_leading_ndim + 1];
+                            
+                            sum += (*this->data_)[a_idx] * (*other.data_)[b_idx];
+                        }
+                        // Write to result
+                        size_t out_idx = result_offset + 
+                                        i * result.strides_[result.ndim() - 2] + 
+                                        j * result.strides_.back();
+                        (*result.data_)[out_idx] = sum;
                     }
-                    result[i, j] = static_cast<T>(sum);
                 }
             }
-            
+
             return result;
         }
 
@@ -341,35 +512,38 @@ class Tensor {
         /// @return A new tensor that is the transpose of the original tensor.
         /// @throws runtime_error if the tensor has more than 2 dimensions.
 
-        Tensor<T> transpose() const {
-            if (this->ndim() > 2) {
-                throw std::runtime_error("Only 1D and 2D tensors are supported for transpose");
+        Tensor<T> transpose(int64_t dim0=-2, int64_t dim1=-1) const {
+            const size_t ndim = this->ndim();
+
+            if (ndim == 1 && dim0 == -2 && dim1 == -1) {
+                Tensor result = *this;
+                result.reshape({this->size(), 1});
+                return result;
             }
 
-            // We want 1D vector to be transposed from 1xn to nx1
-            const size_t n = (this->ndim() == 2)? this->shapes_[0] : 1;
-            const size_t m = (this->ndim() == 2)? this->shapes_[1] : this->shapes_[0];
-
-            Tensor result({m, n}, static_cast<T>(0));
-
-            for (size_t i = 0; i < n; ++i) {
-                for (size_t j = 0; j < m; ++j) {
-                    result.data_[j * n + i] = data_[i * m + j];
-                }
+            if (dim0 == dim1) {
+                return *this; // No-op if dimensions are the same
             }
-            return result;
-        }
 
-
-        
-        /// @brief Flatten the tensor into 1D.
-        /// @return A new 1D tensor with the same elements as the original tensor.
-        Tensor<T> flatten() const {
-            Tensor<T> result({ this->size() }, static_cast<T>(0));
-
-            for (size_t i = 0; i < this->size(); i++) {
-                result.data_[i] = this->data_[i];
+            if (dim0 < 0) {
+                dim0 += ndim;
             }
+
+            if (dim1 < 0) {
+                dim1 += ndim;
+            }
+
+            if (dim0 < 0 || dim0 >= ndim || dim1 < 0 || dim1 >= ndim) {
+                throw out_of_range("Transpose dimensions out of range");
+            }
+
+            // Create new tensor with swapped dimensions
+            Tensor<T> result = *this;
+            swap(result.shapes_[dim0], result.shapes_[dim1]);
+            swap(result.strides_[dim0], result.strides_[dim1]);
+
+            cout << "result.shapes_: " << result.shapes_[0] << " " << result.shapes_[1] << endl;
+            cout << "result.strides_: " << result.strides_[0] << " " << result.strides_[1] << endl;
 
             return result;
         }
@@ -379,17 +553,8 @@ class Tensor {
         /// @post The shape of the tensor is changed to 1D, with the same elements as the original tensor.
         void flatten() {
             this->shapes_ = { this->size() };
+            this->calculate_strides();
             return;
-        }
-        
-
-        // Assign this tensor with other tensor. Exactly the same as copy constructor
-        Tensor<T>& assign(const Tensor<T>& other) {
-            if (this == &other) return *this;
-
-            this->shapes_ = other.shapes_;
-            this->data_ = other.data_;
-            return *this;
         }
 
         /// @brief Calculate the absolute value of each element in the tensor
@@ -398,8 +563,9 @@ class Tensor {
             Tensor<T> result(this->shapes_, static_cast<T>(0));
 
             for (size_t i = 0; i < this->size(); i++) {
-                result.data_[i] = std::abs(this->data_[i]);
+                (*result.data_)[i] = std::abs((*this->data_)[i]);
             }
+
             return result;
         }
 
@@ -410,8 +576,8 @@ class Tensor {
             Tensor<T> result(this->shapes_, static_cast<T>(0));
 
             for (size_t i = 0; i < this->size(); i++) {
-                if (func(this->data_[i])) {
-                    result.data_[i] = this->data_[i];
+                if (func((*this->data_)[i])) {
+                    (*result.data_)[i] = (*this->data_)[i];
                 }
             }
 
@@ -425,7 +591,7 @@ class Tensor {
             Tensor<T> result(this->shapes_, static_cast<T>(0));
 
             for (size_t i = 0; i < this->size(); i++) {
-                result.data_[i] = func(this->data_[i]);
+                (*result.data_)[i] = func((*this->data_)[i]);
             }
 
             return result;
@@ -437,7 +603,7 @@ class Tensor {
             T sum = static_cast<T>(0);
 
             for (size_t i = 0; i < this->size(); i++) {
-                sum += this->data_[i];
+                sum += (*this->data_)[i];
             }
             
             return sum;
@@ -446,15 +612,18 @@ class Tensor {
         /// @brief Check if all elements of two tensors are equal
         /// @param other Tensor to compare
         /// @return Tensor of integers where each element is 1 if the two tensors are equal at the same index, 0 otherwise
-        Tensor<int> equal(const Tensor& other) const{
+        Tensor<int> equal(const Tensor<T>& other) const{
             if (other.shapes_ != this->shapes_) {
                 throw runtime_error("Shape mismatch");
             }
 
             Tensor<T> result(this->shapes_, static_cast<T>(0));
+            const vector<size_t>& result_strides = result.strides_;
 
             for (size_t i = 0; i < this->size(); i++) {
-                result.data_[i] = this->data_[i] == other.data_[i];
+                auto [a_offset, b_offset] = calculate_tensors_offsets(i, this->ndim(), result_strides, other);
+
+                (*result.data_)[i] = (*this->data_)[a_offset] == (*other.data_)[b_offset];
             }
 
             return result.dtype<int>();
@@ -463,13 +632,15 @@ class Tensor {
         /// @brief Check if all elements of two tensors are equal
         /// @param other Tensor to compare
         /// @return true if all elements are equal, false otherwise
-        bool compare(const Tensor& other) const {
+        bool compare(const Tensor<T>& other) const {
             if (other.shapes_ != this->shapes_) {
                 throw runtime_error("Shape mismatch");
             }
 
             for (size_t i = 0; i < this->size(); i++) {
-                if (this->data_[i] != other.data_[i]) {
+                auto [a_offset, b_offset] = calculate_tensors_offsets(i, this->ndim(), this->strides_, other);
+
+                if ((*this->data_)[a_offset] != (*other.data_)[b_offset]) {
                     return false;
                 }
             }
@@ -479,26 +650,26 @@ class Tensor {
         /// @brief Reduce the tensor to the maximum value of all elements
         /// @return a tensor with a single element, the maximum of all elements in the tensor
         inline Tensor<> max() const {
-            return reduce(ReduceOp::MAX);
+            return reduce_impl(ReduceOp::MAX);
         }
 
 
         /// @brief Reduce the tensor to the indices of the maximum values along each row
         /// @return a tensor with indices of the maximum values for each row
         inline Tensor<size_t> argmax() const {
-            return reduce<size_t>(ReduceOp::ARGMAX);
+            return reduce_impl<size_t>(ReduceOp::ARGMAX);
         }
 
         /// @brief Reduce the tensor to the minimum value of all elements
         /// @return a tensor with a single element, the minimum of all elements in the tensor
         inline Tensor<> min() const {
-            return reduce(ReduceOp::MIN);
+            return reduce_impl(ReduceOp::MIN);
         }
 
         /// @brief Reduce the tensor to the indices of the minimum values along each row
         /// @return a tensor with indices of the minimum values for each row
         inline Tensor<size_t> argmin() const {
-            return reduce<size_t>(ReduceOp::ARGMIN);
+            return reduce_impl<size_t>(ReduceOp::ARGMIN);
         }
 
         
@@ -527,31 +698,74 @@ class Tensor {
             }
 
             this->shapes_ = new_shape;
+            this->calculate_strides();
 
             return;
         }
+
+        /// @brief Return a deep copy of the tensor. Actually the same as the copy constructor.
+        /// @details This function will create a new tensor with the same shape and data as the current tensor.
+        /// @return a new tensor which is a deep copy of the current tensor
+        Tensor<T> clone() const {
+            Tensor<T> result = *this;
+
+            return result;
+        }
+
+        vector<T> to_vector() const { return (*this->data_); }
         
         // Get the dimension of the tensor
         inline size_t ndim() const {
             return this->shapes_.size();
         }
 
-        inline const size_t size() const {
-            return this->data_.size();
+        const size_t size() const {
+            size_t n = 1;
+            for (const size_t& s : this->shapes_) {
+                n *= s;
+            }
+            return n;
         }
-        
+
+        /// @brief Print the tensor to console.
+        /// @details This function will print the tensor in a nested array style.
+        void print() const { 
+            print_recursive_impl(0, 0, 0); 
+            cout << endl; // flush the output
+            return;
+        }
 
         inline const vector<size_t>& shapes() const { return this->shapes_; }
 
-        inline void print() const { print_recursive(0, 0); }
 
         // ========================================operators overloading========================================
         inline Tensor<T> operator+(const Tensor<T>& other) const { return this->add(other); }
         inline Tensor<T> operator-(const Tensor<T>& other) const { return this->sub(other); }
         inline Tensor<T> operator*(const Tensor<T>& other) const { return this->mul(other); }
         inline Tensor<T> operator*(const T& scaler) const { return this->mul(scaler); }
-        inline Tensor<T>& operator=(const Tensor<T>& other) { return this->assign(other); }
         inline bool operator==(const Tensor<T>& other) const { return this->compare(other); }
+
+        Tensor<T>& operator=(const Tensor<T>& other) { 
+            if (this == &other) return *this;
+
+            this->shapes_ = other.shapes_;
+            this->data_ = make_shared<vector<T>>(*(other.data_));
+            this->calculate_strides();
+
+            // Copy data from original tensor's view to the new contiguous storage
+            for (size_t i = 0; i < this->size(); ++i) {
+                vector<size_t> indices = linear_to_multi_idxs(i, this->shapes_);
+                size_t src_offset = other.offset_;
+
+                for (size_t dim = 0; dim < indices.size(); ++dim) {
+                    src_offset += indices[dim] * other.strides_[dim];
+                }
+
+                (*this->data_)[i] = (*other.data_)[src_offset];
+            }
+
+            return *this;
+        }
 
         const Tensor<T> operator+=(const Tensor<T>& other) { 
             *this = *this + other;
@@ -577,22 +791,22 @@ class Tensor {
         template<typename... Indices>
         T& operator[](Indices... indices) {
             vector<size_t> idxs = this->get_idxs(indices...);
-            return this->data_[calculate_idx(idxs)]; 
+            return (*this->data_)[this->calculate_idx(idxs)]; 
         }
 
         T& operator[](const vector<size_t>& indices) {
-            return this->data_[calculate_idx(indices)]; 
+            return (*this->data_)[this->calculate_idx(indices)]; 
         }
 
         // rvalue operator overloading
         template<typename... Indices>
         const T& operator[](Indices... indices) const {
             vector<size_t> idxs = this->get_idxs(indices...);
-            return this->data_[calculate_idx(idxs)]; 
+            return (*this->data_)[this->calculate_idx(idxs)]; 
         }
 
         const T& operator[](const vector<size_t>& indices) const {
-            return this->data_[calculate_idx(indices)]; 
+            return (*this->data_)[this->calculate_idx(indices)]; 
         }
 
         /**

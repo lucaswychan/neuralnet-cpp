@@ -9,6 +9,8 @@
 #include <functional>
 #include <climits>
 #include <cstdint>
+#include <type_traits>
+
 
 using namespace std;
 
@@ -43,42 +45,32 @@ struct Slice {
     int stop;
     int step;
     
-    Slice(int start_ = 0, int stop_ = -1, int step_ = 1)
-        : start(start_), stop(stop_), step(step_) {}
+    Slice(int start_ = 0, int stop_ = -1, int step_ = 1) : start(start_), stop(stop_), step(step_) {}
     
-    static Slice parse(const string& slice_str) {
-        Slice result;
-        istringstream ss(slice_str);
-        string token;
-        vector<int> values;
-        vector<uint8_t> is_empty;
-        
-        while (getline(ss, token, ':')) {
-            // cout << "token: " << token << endl;
-            if (token.empty()) {
-                values.push_back(-1);
-                is_empty.push_back(1);
-            } else {
-                values.push_back(stoi(token));
-                is_empty.push_back(0);
-            }
-        }
-        if (values.size() == 1) {
-            values.push_back(-1);
-            is_empty.push_back(1);
-        }
-
-        result.start = is_empty[0] == 1 ? 0 : values[0];
-        result.stop = is_empty[1] == 1 ? INT_MAX : values[1];
-
-        if (values.size() == 3) {
-            result.step = is_empty[2] == 1 ? 1 : values[2];
-        }
-        
-        // cout << "start: " << result.start << " stop: " << result.stop << " step: " << result.step << endl;
-        return result;
-    }
+    static Slice parse(const string& slice_str);
 };
+
+// Helper function to convert negative indices to positive
+size_t normalize_index(int idx, size_t dim_size);
+
+// Helper function to apply slice to a dimension
+vector<size_t> apply_slice(const Slice& slice, size_t dim_size);
+
+vector<size_t> linear_to_multi_idxs(size_t idx, const vector<size_t>& shape);
+
+// Type trait to check if a type is a std::vector
+template<typename>
+struct is_vector : public std::false_type {};
+
+template<typename T, typename A>
+struct is_vector<std::vector<T, A>> : public std::true_type {};
+
+// Type trait to check if a type is a std::vector
+template<typename>
+struct is_initializer_list : public std::false_type {};
+
+template<typename T>
+struct is_initializer_list<std::initializer_list<T>> : public std::true_type {};
 
 // ================================================definition================================================
 
@@ -86,10 +78,12 @@ template<typename U, typename V>
 Tensor<V> dtype_impl(const Tensor<U>& tensor) {
     Tensor<V> result;
     result.shapes_ = tensor.shapes_;
-    result.data_.resize(tensor.data_.size());
+    result.data_->resize(tensor.data_->size());
     
-    std::transform(tensor.data_.begin(), tensor.data_.end(), result.data_.begin(),
+    std::transform(tensor.data_->begin(), tensor.data_->end(), result.data_->begin(),
         [](const U& val) { return static_cast<V>(val); });
+    
+    result.calculate_strides();
         
     return result;
 }
