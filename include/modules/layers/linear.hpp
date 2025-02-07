@@ -14,21 +14,21 @@ class Linear : public Module{
         void randomizeParams();
 
         // setters
-        inline void set_weights(const Tensor<>& desiredWeights) { this->weights_ = desiredWeights; };
-        inline void set_biases(const Tensor<>& desiredBiases) { this->biases_ = desiredBiases; }
+        inline void set_weights(const Tensor<>& target_weight) { this->weight_ = target_weight; };
+        inline void set_biases(const Tensor<>& target_bias) { this->bias_ = target_bias; }
 
         // getters
-        inline const Tensor<>& getWeights() const { return this->weights_; }
-        inline const Tensor<>& getBiases() const { return this->biases_; }
+        inline const Tensor<>& getWeights() const { return this->weight_; }
+        inline const Tensor<>& getBiases() const { return this->bias_; }
 
     private:
         size_t in_features_;
         size_t out_features_;
-        bool bias_;
-        Tensor<> weights_;
-        Tensor<> biases_;
-        Tensor<> grad_weights_;
-        Tensor<> grad_biases_;
+        bool use_bias_;
+        Tensor<> weight_;
+        Tensor<> bias_;
+        Tensor<> grad_weight_;
+        Tensor<> grad_bias_;
     };  
 
 }
