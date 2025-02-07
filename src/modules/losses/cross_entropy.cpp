@@ -4,7 +4,8 @@
 using namespace nn;
 
 CrossEntropyLoss::CrossEntropyLoss() {
-    this->softmax_ = Softmax();
+    cout << "Starting CrossEntropyLoss" << endl;
+    cout << "CrossEntropyLoss initialized" << endl;
 }
 
 double CrossEntropyLoss::forward(const Tensor<>& Y_hat, const Tensor<>& Y) {
