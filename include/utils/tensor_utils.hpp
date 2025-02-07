@@ -78,6 +78,8 @@ template<typename U, typename V>
 Tensor<V> dtype_impl(const Tensor<U>& tensor) {
     Tensor<V> result;
     result.shapes_ = tensor.shapes_;
+
+    result.data_ = make_shared<vector<V>>();
     result.data_->resize(tensor.data_->size());
     
     std::transform(tensor.data_->begin(), tensor.data_->end(), result.data_->begin(),
