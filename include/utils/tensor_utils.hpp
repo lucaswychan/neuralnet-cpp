@@ -9,6 +9,8 @@
 #include <functional>
 #include <climits>
 #include <cstdint>
+#include <type_traits>
+
 
 using namespace std;
 
@@ -54,16 +56,34 @@ size_t normalize_index(int idx, size_t dim_size);
 // Helper function to apply slice to a dimension
 vector<size_t> apply_slice(const Slice& slice, size_t dim_size);
 
+vector<size_t> linear_to_multi_idxs(size_t idx, const vector<size_t>& shape);
+
+// Type trait to check if a type is a std::vector
+template<typename>
+struct is_vector : public std::false_type {};
+
+template<typename T, typename A>
+struct is_vector<std::vector<T, A>> : public std::true_type {};
+
+// Type trait to check if a type is a std::vector
+template<typename>
+struct is_initializer_list : public std::false_type {};
+
+template<typename T>
+struct is_initializer_list<std::initializer_list<T>> : public std::true_type {};
+
 // ================================================definition================================================
 
 template<typename U, typename V>
 Tensor<V> dtype_impl(const Tensor<U>& tensor) {
     Tensor<V> result;
     result.shapes_ = tensor.shapes_;
-    result.data_.resize(tensor.data_.size());
+    result.data_->resize(tensor.data_->size());
     
-    std::transform(tensor.data_.begin(), tensor.data_.end(), result.data_.begin(),
+    std::transform(tensor.data_->begin(), tensor.data_->end(), result.data_->begin(),
         [](const U& val) { return static_cast<V>(val); });
+    
+    result.calculate_strides();
         
     return result;
 }

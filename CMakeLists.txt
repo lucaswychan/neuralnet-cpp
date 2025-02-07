@@ -32,8 +32,10 @@ include_directories(
 # Add source files
 set(SOURCE_FILES
     src/core/module.cpp
+    src/core/tensor.cpp
     src/modules/layers/linear.cpp
     src/modules/layers/dropout.cpp
+    src/modules/layers/conv2d.cpp
     src/modules/losses/mse.cpp
     src/modules/activations/relu.cpp
     src/modules/activations/softmax.cpp
