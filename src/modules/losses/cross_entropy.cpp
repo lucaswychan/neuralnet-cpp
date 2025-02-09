@@ -3,14 +3,16 @@
 #include <math.h>
 using namespace nn;
 
-CrossEntropyLoss::CrossEntropyLoss() {
+CrossEntropyLoss::CrossEntropyLoss()
+{
     cout << "Starting CrossEntropyLoss" << endl;
     cout << "CrossEntropyLoss initialized" << endl;
 }
 
-double CrossEntropyLoss::forward(const Tensor<>& Y_hat, const Tensor<>& Y) {
+double CrossEntropyLoss::forward(const Tensor<> &Y_hat, const Tensor<> &Y)
+{
     /*
-    L = 1 / B \sum_{i=1}^B \sum_{j=1}^M Y_{ij} * log(softmax(Y_hat_{ij)})
+    L = 1 / B \sum_{i=1}^B \sum_{j=1}^M Y_{ij} * log(softmax(Y_hat_{ij}))
 
     R^B x M, Y R^B x M
 
@@ -19,14 +21,17 @@ double CrossEntropyLoss::forward(const Tensor<>& Y_hat, const Tensor<>& Y) {
 
     // We don't have to store the Y_hat as it is not used in the backward pass. Instead, we store the softmax(Y_hat)
     // Note that this->Y_cache_ is just a vector with label, and it is not a matrix with one-hot vectors.
-    if (Y.ndim() == 2) {
+    if (Y.ndim() == 2)
+    {
         // In this case, we assume Y is a matrix of one-hot vectors. So we can just store the index of the correct label
         this->Y_cache_ = Y.argmax().dtype<double>();
     }
-    else if (Y.ndim() == 1) {
+    else if (Y.ndim() == 1)
+    {
         this->Y_cache_ = Y;
     }
-    else {
+    else
+    {
         throw std::runtime_error("Currently, Cross Entropy Loss does not support label with more than 2 dimensions.");
     }
 
@@ -41,7 +46,8 @@ double CrossEntropyLoss::forward(const Tensor<>& Y_hat, const Tensor<>& Y) {
     // sum up all the elements
     double loss_without_factor = 0.0f;
 
-    for (int i = 0; i < B; ++i) {
+    for (int i = 0; i < B; ++i)
+    {
         // Y_{ij} * log(softmax(Y_hat_{ij}))
         loss_without_factor += log(softmax_Y_hat[i, static_cast<int>(this->Y_cache_[i])]);
     }
@@ -49,7 +55,8 @@ double CrossEntropyLoss::forward(const Tensor<>& Y_hat, const Tensor<>& Y) {
     return loss_without_factor * factor;
 }
 
-Tensor<> CrossEntropyLoss::backward() {
+Tensor<> CrossEntropyLoss::backward()
+{
     /*
     dL/dY_hat should have the same shape as Y_hat
 
@@ -69,7 +76,8 @@ Tensor<> CrossEntropyLoss::backward() {
     Since Y is a matrix of one-hot vectors, only the correct label is 1 and the rest are 0
     */
 
-    for (int i = 0; i < B; ++i) {
+    for (int i = 0; i < B; ++i)
+    {
         grad_output[i, static_cast<int>(this->Y_cache_[i])] -= 1.0f;
     }
 
