@@ -209,7 +209,6 @@ private:
     void calculate_strides()
     {
         this->strides_.resize(this->ndim(), 0);
-        vector<size_t> strides(this->ndim());
 
         int64_t stride = 1;
 
@@ -244,13 +243,6 @@ private:
 
         return {a_offset, b_offset};
     }
-
-    // Declare friendship so that TensorView can access private members of Tensor
-    template <typename U, typename V>
-    friend Tensor<V> dtype_impl(const Tensor<U> &tensor);
-
-public:
-    Tensor() = default;
 
     // Helper to recursively flatten nested vectors and compute shapes
     template <typename V>
@@ -303,6 +295,13 @@ public:
             }
         }
     }
+
+    // Declare friendship so that TensorView can access private members of Tensor
+    template <typename U, typename V>
+    friend Tensor<V> dtype_impl(const Tensor<U> &tensor);
+
+public:
+    Tensor() = default;
 
     // Constructor for nested vectors
     template <typename V>
@@ -648,7 +647,7 @@ public:
         return result;
     }
 
-    Tensor<T> permute(const initializer_list<int64_t> &dims)
+    Tensor<T> permute(const initializer_list<int64_t> &dims) const
     {
         size_t ndim = this->ndim();
 
@@ -671,11 +670,11 @@ public:
             seen_dims.insert(dim);
         }
 
-        vector<int64_t> new_shapes(ndim);
-        vector<int64_t> new_strides(ndim);
+        vector<size_t> new_shapes(ndim);
+        vector<size_t> new_strides(ndim);
 
-        int64_t i = 0;
-        for (int64_t dim : dims)
+        size_t i = 0;
+        for (size_t dim : dims)
         {
             if (dim >= ndim)
             {
