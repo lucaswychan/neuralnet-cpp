@@ -7,6 +7,7 @@ Conv2d::Conv2d(int64_t in_channels,
                var_pair stride,
                var_pair padding,
                var_pair dilation,
+               const string &padding_mode,
                bool bias)
 {
     this->in_channels_ = in_channels;
@@ -41,6 +42,16 @@ Conv2d::Conv2d(int64_t in_channels,
     this->padding_ = std::visit(process_variant, padding);
     this->dilation_ = std::visit(process_variant, dilation);
 
+    unordered_map<string, PaddingMode> all_padding_modes = {{"zeros", PaddingMode::ZEROS}, {"reflect", PaddingMode::REFLECT}, {"replicate", PaddingMode::REPLICATE}};
+
+    if (all_padding_modes.find(padding_mode) == all_padding_modes.end())
+    {
+        throw std::invalid_argument("Padding mode must be one of 'zeros', 'reflect', or 'replicate'");
+    }
+
+    this->padding_mode_ = all_padding_modes[padding_mode];
+    this->padding_module_ = Padding(this->padding_, this->padding_mode_);
+
     vector<size_t> weight_shape = {(size_t)this->out_channels_, (size_t)this->in_channels_, (size_t)this->kernel_size_.first, (size_t)this->kernel_size_.second};
 
     this->weight_ = Tensor<>(weight_shape, 0.0);
@@ -54,94 +65,93 @@ Conv2d::Conv2d(int64_t in_channels,
 
 Tensor<> Conv2d::forward(const Tensor<> &input)
 {
+    Tensor<> input_data = input;
     this->original_input_shape_ = input.shapes();
+
+    vector<size_t> output_shape = calculate_output_shape(input.shapes(), this->out_channels_, this->kernel_size_, this->stride_, this->padding_, this->dilation_);
+
+    if (this->padding_.first > 0 && this->padding_.second > 0)
+    {
+        input_data = this->padding_module_.pad(input_data, this->padding_);
+    }
+
+    // this input is the padded version of the original input
+    this->input_cache_ = input_data;
+
+    return convolution(this->stride_, this->dilation_, output_shape, input_data, this->weight_, this->bias_, this->use_bias_);
 }
 
 Tensor<> Conv2d::backward(const Tensor<> &grad_output)
 {
-}
+    // dL_dY = grad_output
 
-void Conv2d::update_params(const float lr)
-{
-}
+    // dL_dW = conv(input_data, dL_dY)
+    Tensor<> permuted_input = this->input_cache_.permute({1, 0, 2, 3});
+    Tensor<> permuted_grad_output = grad_output.permute({1, 0, 2, 3});
 
-Tensor<> Conv2d::convolution(const int2 &stride, const int2 &dilation, const vector<size_t> &output_shape, const Tensor<> &input, const Tensor<> &kernel, const Tensor<> &bias, bool use_bias)
-{
-    const vector<size_t> &input_shape = input.shapes();
-    const vector<size_t> &kernel_shape = kernel.shapes();
+    this->grad_weight_ = convolution(this->dilation_, this->stride_, this->weight_.shapes(), permuted_input, permuted_grad_output, Tensor<>(), false);
 
-    const size_t B = output_shape[0];
-    const size_t C_out = output_shape[1];
-    const size_t H_out = output_shape[2];
-    const size_t W_out = output_shape[3];
+    this->grad_weight_ = this->grad_weight_.permute({1, 0, 2, 3});
 
-    const size_t C_in = input_shape[1];
-    const size_t H_in = input_shape[2];
-    const size_t W_in = input_shape[3];
-
-    const size_t K_H = kernel_shape[2];
-    const size_t K_W = kernel_shape[3];
-
-    Tensor<> output(output_shape, 0.0);
-
-    /*
-    The logic behind is that
-    Let's us first focus on the first kernel among all out_channel kernels
-
-    Each input channel of the data is convolved with the same channel of the kernel, and the result is added to the output
-    Meaning that each input data channel only corresponds to the same channel of the kernel
-
-    For example, the channel 1 of the input data is convolved with the channel 1 of the kernel, but it will not be convolved with the channel 2 of the kernel
-
-    After each input data channel convolving with the same channel of the kernel, element-wise addition is performed among all the convolved result with the first kernel
-
-    Now we get a single output channel
-
-    We repeat this process for all the out_channel channels
-
-    And finally we will get an output with out_channel channels
-    */
-
-    for (size_t b = 0; b < B; ++b)
+    // dL_dB = sum(dL_dY, dims=(0, 2, 3))
+    if (this->use_bias_)
     {
-        for (size_t c = 0; c < C_out; ++c)
+        this->grad_bias_ = Tensor<>({(size_t)this->out_channels_}, 0.0);
+        for (size_t i = 0; i < grad_output.shapes()[0]; i++)
         {
-            for (size_t h = 0; h < H_out; ++h)
+            for (size_t j = 0; j < grad_output.shapes()[1]; j++)
             {
-                for (size_t w = 0; w < W_out; ++w)
+                for (size_t k = 0; k < grad_output.shapes()[2]; k++)
                 {
-                    size_t h_start = h * stride.first;
-                    size_t w_start = w * stride.second;
-
-                    for (size_t ic = 0; ic < C_in; ++ic)
+                    for (size_t l = 0; l < grad_output.shapes()[3]; l++)
                     {
-                        for (size_t kh = 0; kh < K_H; ++kh)
-                        {
-                            for (size_t kw = 0; kw < K_W; ++kw)
-                            {
-                                size_t h_in = h_start + kh * dilation.first;
-                                size_t w_in = w_start + kw * dilation.second;
-
-                                if (h_in >= 0 && h_in < H_in && w_in >= 0 && w_in < W_in)
-                                {
-                                    output[b, c, h, w] += input[b, ic, h_in, w_in] * kernel[c, ic, kh, kw];
-                                }
-                            }
-                        }
-                    }
-
-                    if (use_bias)
-                    {
-                        output[b, c, h, w] += bias[c];
+                        this->grad_bias_[j] += grad_output[i, j, k, l];
                     }
                 }
             }
         }
     }
 
-    return output;
+    // dL_dX = fullconv(dL_dY, W)
+    Tensor<> flipped_weight = flip_vertical_and_horizontal(this->weight_);
+    Tensor<> permuted_flipped_weight = flipped_weight.permute({1, 0, 2, 3});
+
+    Tensor<> copy_grad_output = grad_output;
+
+    if (this->stride_.first > 1 || this->stride_.second > 1)
+    {
+        copy_grad_output = dilate_input(copy_grad_output, this->stride_);
+    }
+
+    const size_t H_further_pad = (this->kernel_size_.first - 1) * this->dilation_.first - this->padding_.first;
+    const size_t W_further_pad = (this->kernel_size_.second - 1) * this->dilation_.second - this->padding_.second;
+
+    if (H_further_pad > 0 && W_further_pad > 0)
+    {
+        copy_grad_output = this->padding_module_.pad(copy_grad_output, {H_further_pad, W_further_pad});
+    }
+    else if (H_further_pad < 0 && W_further_pad < 0)
+    {
+        permuted_flipped_weight = this->padding_module_.pad(permuted_flipped_weight, {-H_further_pad, -W_further_pad});
+    }
+    else
+    {
+        throw std::invalid_argument("The further padding for dL/dX is not correct");
+    }
+
+    Tensor<> grad_input = convolution({1, 1}, this->dilation_, this->original_input_shape_, copy_grad_output, permuted_flipped_weight, Tensor<>(), false);
+
+    return grad_input;
 }
 
-std::tuple<int64_t, int64_t, int64_t, int64_t> Conv2d::calculate_output_shape(const Tensor<> &input)
+void Conv2d::update_params(const float lr)
 {
+    this->weight_ -= this->grad_weight_ * lr;
+
+    if (this->use_bias_)
+    {
+        this->bias_ -= this->grad_bias_ * lr;
+    }
+
+    return;
 }
