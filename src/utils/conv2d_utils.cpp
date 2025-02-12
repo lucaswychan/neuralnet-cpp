@@ -1,6 +1,6 @@
 #include "conv2d_utils.hpp"
 
-Tensor<> Padding::pad(const Tensor<> &input, const int2 &padding) const
+Tensor<> Padding::pad(const Tensor<> &input, const size_tp2 &padding) const
 {
     switch (this->padding_mode_)
     {
@@ -12,7 +12,7 @@ Tensor<> Padding::pad(const Tensor<> &input, const int2 &padding) const
     }
 }
 
-Tensor<> Padding::zero_pad(const Tensor<> &input, const int2 &padding) const
+Tensor<> Padding::zero_pad(const Tensor<> &input, const size_tp2 &padding) const
 {
     const vector<size_t> &input_shape = input.shapes();
 
@@ -48,7 +48,7 @@ Tensor<> Padding::zero_pad(const Tensor<> &input, const int2 &padding) const
     return padded_output;
 }
 
-Tensor<> convolution(const int2 &stride, const int2 &dilation, const vector<size_t> &output_shape, const Tensor<> &input, const Tensor<> &kernel, const Tensor<> &bias, bool use_bias)
+Tensor<> convolution(const size_tp2 &stride, const size_tp2 &dilation, const vector<size_t> &output_shape, const Tensor<> &input, const Tensor<> &kernel, const Tensor<> &bias, bool use_bias)
 {
     const vector<size_t> &input_shape = input.shapes();
     const vector<size_t> &kernel_shape = kernel.shapes();
@@ -151,7 +151,7 @@ Tensor<> convolution(const int2 &stride, const int2 &dilation, const vector<size
  *
  * @throws std::invalid_argument if input_shape is not 4D or if the output shape is invalid.
  */
-const vector<size_t> calculate_output_shape(const vector<size_t> &input_shape, const int64_t out_channel, const int2 &kernel_size, const int2 &stride, const int2 &padding, const int2 &dilation)
+const vector<size_t> calculate_output_shape(const vector<size_t> &input_shape, const int64_t out_channel, const size_tp2 &kernel_size, const size_tp2 &stride, const size_tp2 &padding, const size_tp2 &dilation)
 {
     if (input_shape.size() != 4)
     {
@@ -161,6 +161,15 @@ const vector<size_t> calculate_output_shape(const vector<size_t> &input_shape, c
     const size_t B = input_shape[0];
     const size_t H_in = input_shape[2];
     const size_t W_in = input_shape[3];
+
+    cout << "Btach Size : " << B << endl;
+    cout << "H_in : " << H_in << endl;
+    cout << "W_in : " << W_in << endl;
+    cout << "Out Channel : " << out_channel << endl;
+    cout << "Kernel Size : " << kernel_size.first << ", " << kernel_size.second << endl;
+    cout << "Stride : " << stride.first << ", " << stride.second << endl;
+    cout << "Padding : " << padding.first << ", " << padding.second << endl;
+    cout << "Dilation : " << dilation.first << ", " << dilation.second << endl;
 
     const int64_t H_out = (H_in + 2 * padding.first - dilation.first * (kernel_size.first - 1) - 1) / stride.first + 1;
     const int64_t W_out = (W_in + 2 * padding.second - dilation.second * (kernel_size.second - 1) - 1) / stride.second + 1;
@@ -212,7 +221,7 @@ Tensor<> flip_vertical_and_horizontal(const Tensor<> &input)
 
     return output;
 }
-Tensor<> dilate_input(const Tensor<> &input, const int2 &dilation)
+Tensor<> dilate_input(const Tensor<> &input, const size_tp2 &dilation)
 {
     if (input.ndim() != 4)
     {

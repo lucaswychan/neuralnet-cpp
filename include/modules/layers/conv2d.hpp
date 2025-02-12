@@ -10,12 +10,12 @@ namespace nn
     class Conv2d : public Module
     {
     public:
-        Conv2d(int64_t in_channels,
-               int64_t out_channels,
+        Conv2d(size_t in_channels,
+               size_t out_channels,
                var_pair kernel_size,
-               var_pair stride = 1,
-               var_pair padding = 0,
-               var_pair dilation = 1,
+               var_pair stride = (size_t)1,
+               var_pair padding = (size_t)0,
+               var_pair dilation = (size_t)1,
                const string &padding_mode = "zeros",
                bool bias = true);
 
@@ -23,13 +23,19 @@ namespace nn
         virtual Tensor<> backward(const Tensor<> &grad_output) override;
         virtual void update_params(const float lr) override;
 
+        void set_weight(const Tensor<> &target_weight) { this->weight_ = target_weight; }
+        void set_bias(const Tensor<> &target_bias) { this->bias_ = target_bias; }
+
+        const Tensor<> &get_weight() const { return this->weight_; }
+        const Tensor<> &get_bias() const { return this->bias_; }
+
     private:
-        int64_t in_channels_;
-        int64_t out_channels_;
-        int2 kernel_size_;
-        int2 stride_;
-        int2 padding_;
-        int2 dilation_;
+        size_t in_channels_;
+        size_t out_channels_;
+        size_tp2 kernel_size_;
+        size_tp2 stride_;
+        size_tp2 padding_;
+        size_tp2 dilation_;
         bool use_bias_;
         PaddingMode padding_mode_;
         Padding padding_module_;
