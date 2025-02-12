@@ -472,11 +472,11 @@ public:
     // Multiply all elements of tensor with the given scaler
     Tensor<T> mul(const T &scaler) const
     {
-        Tensor<T> result(this->shapes_, static_cast<T>(0));
+        Tensor<T> result = *this;
 
         for (size_t i = 0; i < this->size(); i++)
         {
-            (*result.data_)[i] = (*this->data_)[i] * scaler;
+            (*result.data_)[i] *= scaler;
         }
         return result;
     }
@@ -647,19 +647,22 @@ public:
         return result;
     }
 
-    Tensor<T> permute(const initializer_list<int64_t> &dims) const
+    template <typename... Dims>
+    Tensor<T> permute(Dims... dims) const
     {
+        vector<size_t> perm_dims = {static_cast<size_t>(dims)...};
+
         size_t ndim = this->ndim();
 
-        if (dims.size() != ndim)
+        if (perm_dims.size() != ndim)
         {
             throw std::invalid_argument("Number of dimensions in permutation must match tensor's number of dimensions");
         }
 
-        unordered_set<int64_t> seen_dims;
-        for (int64_t dim : dims)
+        unordered_set<size_t> seen_dims;
+        for (size_t dim : perm_dims)
         {
-            if (dim < 0 || dim >= ndim)
+            if (dim >= ndim)
             {
                 throw out_of_range("Permute dimension out of range");
             }
@@ -674,7 +677,7 @@ public:
         vector<size_t> new_strides(ndim);
 
         size_t i = 0;
-        for (size_t dim : dims)
+        for (size_t dim : perm_dims)
         {
             if (dim >= ndim)
             {
@@ -899,7 +902,36 @@ public:
         return result;
     }
 
-    vector<T> to_vector() const { return (*this->data_); }
+    static Tensor<T> arange(size_t start, size_t end = 0, vector<size_t> shape = {0})
+    {
+        if (start == end) // if only one argument is provided
+        {
+            throw runtime_error("arange() missing required argument: 'end'");
+        }
+        if (end == 0)
+        {
+            end = start;
+            start = 0;
+        }
+
+        if (shape.size() == 1 && shape[0] <= 0)
+        {
+            shape[0] = end - start + 1;
+        }
+
+        Tensor<T> result(shape, static_cast<T>(0));
+
+        cout << "In arange, weight address: " << &result.data_ << endl;
+
+        size_t idx = 0;
+        for (size_t i = start; i <= end; i++)
+        {
+            (*result.data_)[idx] = static_cast<T>(i);
+            idx++;
+        }
+
+        return result;
+    }
 
     // Get the dimension of the tensor
     inline size_t ndim() const
