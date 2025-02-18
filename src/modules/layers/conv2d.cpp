@@ -1,3 +1,5 @@
+#include <random>
+#include <cmath>
 #include "conv2d.hpp"
 using namespace nn;
 
@@ -66,6 +68,9 @@ Conv2d::Conv2d(size_t in_channels,
         vector<size_t> bias_shape = {this->out_channels_};
         this->bias_ = Tensor<>(bias_shape, 0.0);
     }
+
+    // randomize the weights and bias based on PyTorch implementation
+    this->reset_parameters();
 }
 
 Tensor<> Conv2d::forward(const Tensor<> &input)
@@ -159,4 +164,51 @@ void Conv2d::update_params(const float lr)
     }
 
     return;
+}
+
+void Conv2d::reset_parameters()
+{
+    /*
+    PyTorch implementation:
+
+    n = self.in_channels
+    for k in self.kernel_size:
+        n *= k
+    stdv = 1. / math.sqrt(n)
+    self.weight.data.uniform_(-stdv, stdv)
+    if self.bias is not None:
+        self.bias.data.uniform_(-stdv, stdv)
+    */
+
+    size_t n = this->in_channels_;
+    n *= this->kernel_size_.first * this->kernel_size_.second;
+
+    const double stdv = 1.0 / sqrt(n);
+
+    // Set up the random number generator
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_real_distribution<double> dis(-stdv, stdv);
+
+    for (size_t i = 0; i < this->out_channels_; i++)
+    {
+        for (size_t j = 0; j < this->in_channels_; j++)
+        {
+            for (size_t k = 0; k < this->kernel_size_.first; k++)
+            {
+                for (size_t l = 0; l < this->kernel_size_.second; l++)
+                {
+                    this->weight_[i, j, k, l] = dis(gen);
+                }
+            }
+        }
+    }
+
+    if (this->use_bias_)
+    {
+        for (size_t i = 0; i < this->out_channels_; i++)
+        {
+            this->bias_[i] = dis(gen);
+        }
+    }
 }

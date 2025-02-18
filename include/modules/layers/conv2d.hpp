@@ -23,6 +23,8 @@ namespace nn
         virtual Tensor<> backward(const Tensor<> &grad_output) override;
         virtual void update_params(const float lr) override;
 
+        void reset_parameters();
+
         void set_weight(const Tensor<> &target_weight) { this->weight_ = target_weight; }
         void set_bias(const Tensor<> &target_bias) { this->bias_ = target_bias; }
 
