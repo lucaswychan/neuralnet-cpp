@@ -7,7 +7,7 @@ class Tensor
 {
 private:
     shared_ptr<vector<T>> data_ = nullptr; // data is stored as a 1D vector // shared_ptr is used to avoid copying data
-    vector<size_t> shapes_;                // store the dimensions of the tensor
+    vector<size_t> shape_;                 // store the dimensions of the tensor
     vector<size_t> strides_;               // store the strides of the tensor
     size_t offset_ = 0;                    // offset for slicing
     mutable int64_t size_ = -1;            // it can be changed by const member functions (in size() function)
@@ -29,7 +29,7 @@ private:
         const string indent_str(indent, ' ');
 
         // Handle empty dimensions
-        if (this->shapes_[dim] == 0)
+        if (this->shape_[dim] == 0)
         {
             cout << indent_str << "[]";
             return;
@@ -39,20 +39,20 @@ private:
 
         if (dim == this->ndim() - 1)
         { // Last dimension
-            for (size_t i = 0; i < this->shapes_[dim]; ++i)
+            for (size_t i = 0; i < this->shape_[dim]; ++i)
             {
                 cout << (*this->data_)[offset + i * this->strides_[dim]];
-                if (i < this->shapes_[dim] - 1)
+                if (i < this->shape_[dim] - 1)
                     cout << ", ";
             }
         }
         else
         {
             cout << "\n";
-            for (size_t i = 0; i < this->shapes_[dim]; ++i)
+            for (size_t i = 0; i < this->shape_[dim]; ++i)
             {
                 print_recursive_impl(dim + 1, offset + i * this->strides_[dim], indent + 2);
-                if (i < this->shapes_[dim] - 1)
+                if (i < this->shape_[dim] - 1)
                     cout << ",\n";
             }
             cout << "\n"
@@ -75,7 +75,7 @@ private:
         // Check bounds
         for (size_t i = 0; i < idxs.size(); ++i)
         {
-            size_t normalized_idx = normalize_index(idxs[i], this->shapes_[i]);
+            size_t normalized_idx = normalize_index(idxs[i], this->shape_[i]);
             normalized_idxs.push_back(normalized_idx);
         }
 
@@ -102,8 +102,8 @@ private:
         }
 
         // Determine tensor dimensions
-        const size_t num_rows = (ndim == 2) ? this->shapes_[0] : 1;
-        const size_t num_cols = (ndim == 2) ? this->shapes_[1] : this->shapes_[0];
+        const size_t num_rows = (ndim == 2) ? this->shape_[0] : 1;
+        const size_t num_cols = (ndim == 2) ? this->shape_[1] : this->shape_[0];
 
         vector<U> result(num_rows);
 
@@ -170,14 +170,14 @@ private:
 
     Tensor<T> arithmetic_operation_impl(ArithmeticOp op, const Tensor<T> &other) const
     {
-        if (other.shapes_ != this->shapes_)
+        if (other.shape_ != this->shape_)
         {
             throw runtime_error("Shape mismatch in arithmetic operation");
         }
 
         size_t ndim = this->ndim();
 
-        Tensor<T> result(this->shapes_, static_cast<T>(0));
+        Tensor<T> result(this->shape_, static_cast<T>(0));
 
         // Precompute result's contiguous strides for index calculation
         const vector<size_t> &result_strides = result.strides_;
@@ -206,7 +206,7 @@ private:
     }
 
     // Helper function to cacluate the stride of the tensor
-    void calculate_strides()
+    void compute_contiguous_strides()
     {
         this->strides_.resize(this->ndim(), 0);
 
@@ -215,7 +215,7 @@ private:
         for (int64_t i = this->ndim() - 1; i >= 0; --i)
         {
             this->strides_[i] = stride;
-            stride *= this->shapes_[i];
+            stride *= this->shape_[i];
         }
     }
 
@@ -225,7 +225,7 @@ private:
 
         size_t remaining = idx;
 
-        for (int dim = 0; dim < ndim; ++dim)
+        for (int64_t dim = 0; dim < ndim; ++dim)
         {
             indices[dim] = remaining / result_strides[dim];
             remaining %= result_strides[dim];
@@ -235,7 +235,7 @@ private:
         size_t a_offset = this->offset_;
         size_t b_offset = other.offset_;
 
-        for (int dim = 0; dim < ndim; ++dim)
+        for (int64_t dim = 0; dim < ndim; ++dim)
         {
             a_offset += indices[dim] * this->strides_[dim];
             b_offset += indices[dim] * other.strides_[dim];
@@ -249,15 +249,15 @@ private:
     void flatten_vector(const std::vector<V> &vec, size_t depth = 0)
     {
         // Add current level's size to shapes
-        if (depth == this->shapes_.size())
+        if (depth == this->shape_.size())
         {
             // First encounter with this depth: record size
-            this->shapes_.push_back(vec.size());
+            this->shape_.push_back(vec.size());
         }
         else
         {
             // Verify size matches the existing dimension
-            if (vec.size() != this->shapes_[depth])
+            if (vec.size() != this->shape_[depth])
             {
                 throw std::invalid_argument("Inconsistent shape at depth " + std::to_string(depth));
             }
@@ -309,7 +309,7 @@ public:
     {
         this->data_ = make_shared<vector<T>>();
         flatten_vector(input);
-        this->calculate_strides();
+        this->compute_contiguous_strides();
     }
 
     // // Recursive helper to process nested initializer lists
@@ -344,17 +344,17 @@ public:
     // Scaler constructor
     Tensor(const T &value)
     {
-        this->shapes_ = vector<size_t>{1};
+        this->shape_ = vector<size_t>{1};
         this->data_ = make_shared<vector<T>>(1, value);
-        this->calculate_strides();
+        this->compute_contiguous_strides();
     }
 
     // 1D tensor constructor
     Tensor(const initializer_list<T> &data_1d)
     {
         this->data_ = make_shared<vector<T>>(data_1d.begin(), data_1d.end());
-        this->shapes_ = vector<size_t>{data_1d.size()};
-        this->calculate_strides();
+        this->shape_ = vector<size_t>{data_1d.size()};
+        this->compute_contiguous_strides();
     }
 
     // 2D tensor constructor
@@ -362,7 +362,7 @@ public:
     {
         const size_t n = data_2d.size(), m = data_2d.begin()->size();
 
-        this->shapes_ = vector<size_t>{n, m};
+        this->shape_ = vector<size_t>{n, m};
 
         this->data_ = make_shared<vector<T>>();
         this->data_->reserve(n * m); // Optimize memory allocation
@@ -371,7 +371,7 @@ public:
         {
             this->data_->insert(this->data_->end(), row.begin(), row.end());
         }
-        this->calculate_strides();
+        this->compute_contiguous_strides();
     }
 
     // 3D tensor constructor
@@ -379,7 +379,7 @@ public:
     {
         const size_t n = data_3d.size(), m = data_3d.begin()->size(), l = data_3d.begin()->begin()->size();
 
-        this->shapes_ = vector<size_t>{n, m, l};
+        this->shape_ = vector<size_t>{n, m, l};
 
         this->data_ = make_shared<vector<T>>();
         this->data_->reserve(n * m * l); // Optimize memory allocation
@@ -391,7 +391,7 @@ public:
                 this->data_->insert(this->data_->end(), row.begin(), row.end());
             }
         }
-        this->calculate_strides();
+        this->compute_contiguous_strides();
     }
 
     // 4D tensor constructor
@@ -399,7 +399,7 @@ public:
     {
         const size_t n = data_4d.size(), m = data_4d.begin()->size(), l = data_4d.begin()->begin()->size(), k = data_4d.begin()->begin()->begin()->size();
 
-        this->shapes_ = vector<size_t>{n, m, l, k};
+        this->shape_ = vector<size_t>{n, m, l, k};
 
         this->data_ = make_shared<vector<T>>();
         this->data_->reserve(n * m * l * k); // Optimize memory allocation
@@ -414,13 +414,13 @@ public:
                 }
             }
         }
-        this->calculate_strides();
+        this->compute_contiguous_strides();
     }
 
     // certin value constructor
     Tensor(const vector<size_t> &shape, const T &value)
     {
-        this->shapes_ = shape;
+        this->shape_ = shape;
         size_t size = 1;
         for (const size_t &dim : shape)
         {
@@ -428,7 +428,7 @@ public:
         }
 
         this->data_ = make_shared<vector<T>>(size, value);
-        this->calculate_strides();
+        this->compute_contiguous_strides();
     }
 
     // copy constructor
@@ -516,8 +516,8 @@ public:
             throw std::runtime_error("Number of leading dimensions must match");
         }
 
-        vector<size_t> A_leading_shape(this->shapes_.begin(), this->shapes_.end() - 2);
-        vector<size_t> B_leading_shape(other.shapes_.begin(), other.shapes_.end() - 2);
+        vector<size_t> A_leading_shape(this->shape_.begin(), this->shape_.end() - 2);
+        vector<size_t> B_leading_shape(other.shape_.begin(), other.shape_.end() - 2);
 
         if (A_leading_shape != B_leading_shape)
         {
@@ -525,10 +525,10 @@ public:
         }
 
         // Extract matrix dimensions
-        const size_t n = this->shapes_[A_ndim - 2];
-        const size_t m = this->shapes_[A_ndim - 1];
-        const size_t m_other = other.shapes_[B_ndim - 2];
-        const size_t p = other.shapes_[B_ndim - 1];
+        const size_t n = this->shape_[A_ndim - 2];
+        const size_t m = this->shape_[A_ndim - 1];
+        const size_t m_other = other.shape_[B_ndim - 2];
+        const size_t p = other.shape_[B_ndim - 1];
 
         if (m != m_other)
         {
@@ -638,7 +638,7 @@ public:
 
         // Create new tensor with swapped dimensions
         Tensor<T> result = *this;
-        swap(result.shapes_[dim0], result.shapes_[dim1]);
+        swap(result.shape_[dim0], result.shape_[dim1]);
         swap(result.strides_[dim0], result.strides_[dim1]);
 
         // cout << "result.shapes_: " << result.shapes_[0] << " " << result.shapes_[1] << endl;
@@ -684,13 +684,13 @@ public:
                 throw std::out_of_range("Permutation dimension out of range");
             }
 
-            new_shapes[i] = this->shapes_[dim];
+            new_shapes[i] = this->shape_[dim];
             new_strides[i] = this->strides_[dim];
             ++i;
         }
 
         Tensor<T> result = *this;
-        result.shapes_ = new_shapes;
+        result.shape_ = new_shapes;
         result.strides_ = new_strides;
 
         return result;
@@ -701,8 +701,8 @@ public:
     /// @post The shape of the tensor is changed to 1D, with the same elements as the original tensor.
     void flatten()
     {
-        this->shapes_ = {this->size()};
-        this->calculate_strides();
+        this->shape_ = {this->size()};
+        this->compute_contiguous_strides();
         return;
     }
 
@@ -772,12 +772,12 @@ public:
     /// @return Tensor of integers where each element is 1 if the two tensors are equal at the same index, 0 otherwise
     Tensor<int> equal(const Tensor<T> &other) const
     {
-        if (other.shapes_ != this->shapes_)
+        if (other.shape_ != this->shape_)
         {
             throw runtime_error("Shape mismatch");
         }
 
-        Tensor<T> result(this->shapes_, static_cast<T>(0));
+        Tensor<T> result(this->shape_, static_cast<T>(0));
         const vector<size_t> &result_strides = result.strides_;
 
         for (size_t i = 0; i < this->size(); i++)
@@ -795,7 +795,7 @@ public:
     /// @return true if all elements are equal, false otherwise
     bool compare(const Tensor<T> &other) const
     {
-        if (other.shapes_ != this->shapes_)
+        if (other.shape_ != this->shape_)
         {
             throw runtime_error("Shape mismatch");
         }
@@ -857,38 +857,55 @@ public:
     /// @throws runtime_error if the new shape is not compatible with the current number of elements.
     void reshape(const vector<size_t> &new_shape)
     {
-        size_t new_size = 1;
-        for (const size_t &dim : new_shape)
-        {
-            new_size *= dim;
-        }
+        // Calculate total elements for both shapes
+        const int64_t current_elements = accumulate(
+            this->shape_.begin(), this->shape_.end(), 1, multiplies<size_t>());
+        const int64_t new_elements = accumulate(
+            new_shape.begin(), new_shape.end(), 1, multiplies<size_t>());
 
-        if (new_size != this->size())
+        if (current_elements != new_elements)
         {
             throw runtime_error("New shape must be compatible with the original shape");
         }
 
-        this->shapes_ = new_shape;
-        this->calculate_strides();
+        vector<size_t> original_strides(this->ndim(), 0);
+        int64_t stride = 1;
+
+        for (int64_t i = this->ndim() - 1; i >= 0; --i)
+        {
+            original_strides[i] = stride;
+            stride *= this->shape_[i];
+        }
+
+        if (original_strides != this->strides_)
+        {
+            cout << "Clone the tensor" << endl;
+            // Create a new tensor with contiguous data
+            Tensor<T> result = this->clone();
+            *this = result;
+        }
+
+        this->shape_ = new_shape;
+        this->compute_contiguous_strides();
 
         return;
     }
 
-    /// @brief Return a deep copy of the tensor. Actually the same as the copy constructor.
+    /// @brief Return a deep copy of the tensor. The data is copied to a new contiguous storage (and this is the only difference from copy constructor).
     /// @details This function will create a new tensor with the same shape and data as the current tensor.
     /// @return a new tensor which is a deep copy of the current tensor
     Tensor<T> clone() const
     {
         Tensor<T> result;
 
-        result.shapes_ = this->shapes_;
+        result.shape_ = this->shape_;
         result.data_ = make_shared<vector<T>>(*(this->data_));
-        result.calculate_strides();
+        result.compute_contiguous_strides();
 
         // Copy data from original tensor's view to the new contiguous storage
         for (size_t i = 0; i < this->size(); ++i)
         {
-            vector<size_t> indices = linear_to_multi_idxs(i, result.shapes_);
+            vector<size_t> indices = linear_to_multi_idxs(i, result.shape_);
             size_t src_offset = this->offset_;
 
             for (size_t dim = 0; dim < indices.size(); ++dim)
@@ -936,7 +953,7 @@ public:
     // Get the dimension of the tensor
     inline size_t ndim() const
     {
-        return this->shapes_.size();
+        return this->shape_.size();
     }
 
     const size_t size() const
@@ -952,7 +969,7 @@ public:
         }
 
         this->size_ = 1;
-        for (const size_t &s : this->shapes_)
+        for (const size_t &s : this->shape_)
         {
             this->size_ *= s;
         }
@@ -969,7 +986,7 @@ public:
         return;
     }
 
-    inline const vector<size_t> &shapes() const { return this->shapes_; }
+    inline const vector<size_t> &shapes() const { return this->shape_; }
 
     // ========================================operators overloading========================================
     inline Tensor<T> operator+(const Tensor<T> &other) const { return this->add(other); }
@@ -988,7 +1005,7 @@ public:
         if (this == &other)
             return *this;
 
-        this->shapes_ = other.shapes_;
+        this->shape_ = other.shape_;
         this->data_ = make_shared<vector<T>>(*(other.data_));
         this->strides_ = other.strides_;
         this->offset_ = other.offset_;
@@ -1077,15 +1094,15 @@ public:
             if (auto str_idx = get_if<string>(&idx))
             {
                 Slice slice = Slice::parse(*str_idx);
-                expanded_indices.push_back(apply_slice(slice, this->shapes_[i]));
+                expanded_indices.push_back(apply_slice(slice, this->shape_[i]));
             }
             else if (auto int_idx = get_if<size_t>(&idx))
             {
-                expanded_indices.push_back({normalize_index(*int_idx, this->shapes_[i])});
+                expanded_indices.push_back({normalize_index(*int_idx, this->shape_[i])});
             }
             else if (auto slice_idx = get_if<Slice>(&idx))
             {
-                expanded_indices.push_back(apply_slice(*slice_idx, this->shapes_[i]));
+                expanded_indices.push_back(apply_slice(*slice_idx, this->shape_[i]));
             }
             else
             {

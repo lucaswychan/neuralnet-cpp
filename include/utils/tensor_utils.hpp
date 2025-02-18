@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <numeric>
 #include <vector>
 #include <initializer_list>
 #include <algorithm>
@@ -93,7 +94,7 @@ Tensor<V> dtype_impl(const Tensor<U> &tensor)
 {
     Tensor<V> result;
 
-    result.shapes_ = tensor.shapes_;
+    result.shape_ = tensor.shape_;
     result.data_ = make_shared<vector<V>>();
     result.data_->resize(tensor.data_->size());
     result.strides_ = tensor.strides_;
