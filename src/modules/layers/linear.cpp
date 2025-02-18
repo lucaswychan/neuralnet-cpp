@@ -12,8 +12,8 @@ Linear::Linear(size_t in_features, size_t out_features, bool bias) : in_features
         this->bias_ = Tensor<>({out_features, 1}, 0.0f);
     }
 
-    // randomize the weights. The bias is originally 0.
-    this->randomizeParams();
+    // randomize the weights and bias based on PyTorch implementation
+    this->reset_parameters();
 
     cout << "Linear layer initialized with in_features = " << in_features << " and out_features = " << out_features << endl;
     cout << &this->input_cache_ << endl;
@@ -81,17 +81,24 @@ void Linear::update_params(const float lr)
     return;
 }
 
-void Linear::randomizeParams()
+void Linear::reset_parameters()
 {
+    /*
+    PyTorch implementation:
+
+    stdv = 1. / math.sqrt(self.weight.size(1))
+    self.weight.data.uniform_(-stdv, stdv)
+    if self.bias is not None:
+        self.bias.data.uniform_(-stdv, stdv)
+
+    */
     // Calculate the limit for the uniform distribution
-    double limit = sqrt(6.0f / (this->in_features_ + this->out_features_));
+    const double stdv = 1.0 / sqrt(this->weight_.shapes()[0]); // since the weight is transposed
 
     // Set up the random number generator
     random_device rd;
     mt19937 gen(rd());
-    uniform_real_distribution<double> dis(-limit, limit);
-
-    cout << "Starting randomization" << endl;
+    uniform_real_distribution<double> dis(-stdv, stdv);
 
     // Xavier initialization
     for (size_t i = 0; i < this->in_features_; i++)
@@ -102,5 +109,11 @@ void Linear::randomizeParams()
         }
     }
 
-    cout << "Finished randomization" << endl;
+    if (this->use_bias_)
+    {
+        for (size_t i = 0; i < this->out_features_; i++)
+        {
+            this->bias_[i, 0] = dis(gen);
+        }
+    }
 }

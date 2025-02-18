@@ -13,7 +13,7 @@ namespace nn
         virtual Tensor<> backward(const Tensor<> &grad_output) override;
         virtual void update_params(const float lr) override;
 
-        void randomizeParams();
+        void reset_parameters();
 
         // setters
         inline void set_weight(const Tensor<> &target_weight) { this->weight_ = target_weight; };
