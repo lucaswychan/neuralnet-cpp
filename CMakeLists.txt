@@ -36,6 +36,7 @@ set(SOURCE_FILES
     src/core/module.cpp
     src/modules/layers/linear.cpp
     src/modules/layers/conv2d.cpp
+    src/modules/layers/flatten.cpp
     src/utils/conv2d_utils.cpp
     src/modules/layers/dropout.cpp
     src/modules/layers/conv2d.cpp
