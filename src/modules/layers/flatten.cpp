@@ -8,24 +8,18 @@ Flatten::Flatten(int64_t start_dim, int64_t end_dim) : start_dim_(start_dim), en
 
 Tensor<> Flatten::forward(const Tensor<> &input)
 {
-    this->original_shape_ = input.shapes();
+    this->original_input_shape_ = input.shapes();
 
-    vector<size_t> new_shape;
-    // return input.flatten(this->start_dim_, this->end_dim_);
-
-    Tensor<> input_data = input;
-    input_data.reshape(new_shape);
-
-    return input_data;
+    return input.flatten(this->start_dim_, this->end_dim_);
 }
 
 Tensor<> Flatten::backward(const Tensor<> &grad_output)
 {
-    // return grad_output.reshape(this->original_shape_);
-    return Tensor<>();
+    return grad_output.reshape(this->original_input_shape_);
 }
 
 void Flatten::update_params(const float lr)
 {
+    //  we don't need to update any parameters
     return;
 }

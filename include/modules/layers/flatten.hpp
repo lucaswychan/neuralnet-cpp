@@ -16,7 +16,7 @@ namespace nn
     private:
         int64_t start_dim_;
         int64_t end_dim_;
-        vector<size_t> original_shape_;
+        vector<size_t> original_input_shape_;
     };
 
 }
