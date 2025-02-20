@@ -31,16 +31,19 @@ include_directories(
 
 # Add source files
 set(SOURCE_FILES
-    src/core/module.cpp
     src/core/tensor.cpp
+    src/utils/tensor_utils.cpp
+    src/core/module.cpp
     src/modules/layers/linear.cpp
+    src/modules/layers/conv2d.cpp
+    src/modules/layers/flatten.cpp
+    src/utils/conv2d_utils.cpp
     src/modules/layers/dropout.cpp
     src/modules/layers/conv2d.cpp
     src/modules/losses/mse.cpp
     src/modules/activations/relu.cpp
     src/modules/activations/softmax.cpp
     src/modules/losses/cross_entropy.cpp
-    src/utils/tensor_utils.cpp
     src/datasets/mnist.cpp
     src/models/mlp.cpp
     src/metrics/accuracy.cpp
@@ -51,7 +54,7 @@ set(SOURCE_FILES
 add_library(neuralnet ${SOURCE_FILES})
 
 # Add the executable for the main example
-add_executable(main examples/test_tensor.cpp)
+add_executable(main examples/test_conv2d.cpp)
 target_link_libraries(main neuralnet)
 
 # Only build tests if BUILD_TESTS is ON

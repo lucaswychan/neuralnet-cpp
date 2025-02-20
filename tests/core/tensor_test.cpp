@@ -3,12 +3,14 @@
 #include "tensor.hpp"
 #include "math.h"
 
-TEST_CASE("TensorTest - Constructor and Destructor") {
+TEST_CASE("TensorTest - Constructor and Destructor")
+{
     Tensor<> tensor;
     // No explicit assertions needed, just verify no crashes
 }
 
-TEST_CASE("TensorTest - Scaler Constructor") {
+TEST_CASE("TensorTest - Scaler Constructor")
+{
     Tensor<> tensor(10.0f);
     CHECK(tensor.ndim() == 1);
     CHECK(tensor.size() == 1);
@@ -16,7 +18,8 @@ TEST_CASE("TensorTest - Scaler Constructor") {
     CHECK(tensor[0] == 10);
 }
 
-TEST_CASE("TensorTest - 1D Tensor Constructor from initializer_list") {
+TEST_CASE("TensorTest - 1D Tensor Constructor from initializer_list")
+{
     Tensor<> tensor_1d = {1.0f, 2.0f, 3.0f, 4.0f};
     CHECK(tensor_1d.ndim() == 1);
     CHECK(tensor_1d.size() == 4);
@@ -33,7 +36,8 @@ TEST_CASE("TensorTest - 1D Tensor Constructor from initializer_list") {
     CHECK(tensor_1d_1val[0] == 0.0f);
 }
 
-TEST_CASE("TensorTest - 2D Tensor Constructor from initializer_list") {
+TEST_CASE("TensorTest - 2D Tensor Constructor from initializer_list")
+{
     Tensor<> tensor_2d = {{1.0f, 2.0f}, {3.0f, 4.0f}};
     CHECK(tensor_2d.ndim() == 2);
     CHECK(tensor_2d.size() == 4);
@@ -43,7 +47,7 @@ TEST_CASE("TensorTest - 2D Tensor Constructor from initializer_list") {
     CHECK(tensor_2d[0, 1] == 2.0f);
     CHECK(tensor_2d[1, 0] == 3.0f);
     CHECK(tensor_2d[1, 1] == 4.0f);
-    
+
     Tensor<> tensor_2d_1row = {{0.0f, 0.0f}};
     CHECK(tensor_2d_1row.ndim() == 2);
     CHECK(tensor_2d_1row.size() == 2);
@@ -61,7 +65,8 @@ TEST_CASE("TensorTest - 2D Tensor Constructor from initializer_list") {
     // CHECK(tensor_2d_1col[1, 0] == 0.0f);
 }
 
-TEST_CASE("TensorTest - 3D Tensor Constructor from initializer_list") {
+TEST_CASE("TensorTest - 3D Tensor Constructor from initializer_list")
+{
     Tensor<> tensor = {{{1.0f, 2.0f}, {3.0f, 4.0f}}, {{5.0f, 6.0f}, {7.0f, 8.0f}}};
     CHECK(tensor.ndim() == 3);
     CHECK(tensor.size() == 8);
@@ -87,7 +92,8 @@ TEST_CASE("TensorTest - 3D Tensor Constructor from initializer_list") {
     CHECK(tensor2[1, 1, 1] == 0.0f);
 }
 
-TEST_CASE("TensorTest - 1D Tensor Constructor from vector") {
+TEST_CASE("TensorTest - 1D Tensor Constructor from vector")
+{
     vector<double> data = {1.0f, 2.0f, 3.0f, 4.0f};
     Tensor<> tensor1 = data;
     CHECK(tensor1.ndim() == 1);
@@ -106,7 +112,8 @@ TEST_CASE("TensorTest - 1D Tensor Constructor from vector") {
     CHECK(tensor2[0] == 0.0f);
 }
 
-TEST_CASE("TensorTest - 2D Tensor Constructor from vector") {
+TEST_CASE("TensorTest - 2D Tensor Constructor from vector")
+{
     vector<vector<double>> data = {{1.0f, 2.0f}, {3.0f, 4.0f}};
     Tensor<> tensor = data;
     CHECK(tensor.ndim() == 2);
@@ -117,7 +124,7 @@ TEST_CASE("TensorTest - 2D Tensor Constructor from vector") {
     CHECK(tensor[0, 1] == 2.0f);
     CHECK(tensor[1, 0] == 3.0f);
     CHECK(tensor[1, 1] == 4.0f);
-    
+
     vector<vector<double>> data2 = {{0.0f, 0.0f}};
     Tensor<> tensor2 = data2;
     CHECK(tensor2.ndim() == 2);
@@ -128,7 +135,8 @@ TEST_CASE("TensorTest - 2D Tensor Constructor from vector") {
     CHECK(tensor2[0, 1] == 0.0f);
 }
 
-TEST_CASE("TensorTest - 3D Tensor Constructor from vector") {
+TEST_CASE("TensorTest - 3D Tensor Constructor from vector")
+{
     vector<vector<vector<double>>> data = {{{1.0f, 2.0f}, {3.0f, 4.0f}}, {{5.0f, 6.0f}, {7.0f, 8.0f}}};
     Tensor<> tensor = data;
     CHECK(tensor.ndim() == 3);
@@ -156,7 +164,8 @@ TEST_CASE("TensorTest - 3D Tensor Constructor from vector") {
     CHECK(tensor2[1, 1, 1] == 0.0f);
 }
 
-TEST_CASE("TensorTest - 4D Tensor Constructor from vector") {
+TEST_CASE("TensorTest - 4D Tensor Constructor from vector")
+{
     vector<vector<vector<vector<double>>>> data = {{{{1.0f, 2.0f}, {3.0f, 4.0f}}, {{5.0f, 6.0f}, {7.0f, 8.0f}}}, {{{9.0f, 10.0f}, {11.0f, 12.0f}}, {{13.0f, 14.0f}, {15.0f, 16.0f}}}};
     Tensor<> tensor = data;
     CHECK(tensor.ndim() == 4);
@@ -172,7 +181,8 @@ TEST_CASE("TensorTest - 4D Tensor Constructor from vector") {
     CHECK(tensor[1, 1, 1, 1] == 16.0f);
 }
 
-TEST_CASE("TensorTest - Copy Constructor") {
+TEST_CASE("TensorTest - Copy Constructor")
+{
     // 1D tensor
     Tensor<> tensor1 = {1.0f, 2.0f, 3.0f, 4.0f};
     Tensor<> test_tensor = tensor1;
@@ -219,7 +229,8 @@ TEST_CASE("TensorTest - Copy Constructor") {
     CHECK(test_tensor[1, 1, 1] == 8.0f);
 }
 
-TEST_CASE("TensorTest - Move Constructor") {
+TEST_CASE("TensorTest - Move Constructor")
+{
     // 1D tensor
     Tensor<> tensor1 = {1.0f, 2.0f, 3.0f, 4.0f};
     Tensor<> test_tensor = std::move(tensor1);
@@ -266,7 +277,8 @@ TEST_CASE("TensorTest - Move Constructor") {
     CHECK(test_tensor[1, 1, 1] == 8.0f);
 }
 
-TEST_CASE("TensorTest - Certain Value Constructor") {
+TEST_CASE("TensorTest - Certain Value Constructor")
+{
     Tensor<> tensor_1d({1}, 0.0f);
     CHECK(tensor_1d.ndim() == 1);
     CHECK(tensor_1d.size() == 1);
@@ -283,7 +295,6 @@ TEST_CASE("TensorTest - Certain Value Constructor") {
     CHECK(tensor_2d[1, 0] == 10.0f);
     CHECK(tensor_2d[1, 1] == 10.0f);
 
-
     Tensor<> tensor_3d({2, 2, 2}, 5.0f);
     CHECK(tensor_3d.ndim() == 3);
     CHECK(tensor_3d.size() == 8);
@@ -297,7 +308,8 @@ TEST_CASE("TensorTest - Certain Value Constructor") {
     CHECK(tensor_3d[1, 1, 1] == 5.0f);
 }
 
-TEST_CASE("TensorTest - Indexing Operator") {
+TEST_CASE("TensorTest - Indexing Operator")
+{
     Tensor<> tensor = {1.0f, 2.0f, 3.0f, 4.0f};
     CHECK(tensor[0] == 1.0f);
     CHECK(tensor[1] == 2.0f);
@@ -318,7 +330,8 @@ TEST_CASE("TensorTest - Indexing Operator") {
     CHECK(tensor[1, 1, 1] == 8.0f);
 }
 
-TEST_CASE("TensorTest - Indexing Operator - Out of Bound") {
+TEST_CASE("TensorTest - Indexing Operator - Out of Bound")
+{
     Tensor<> tensor = {1.0f, 2.0f, 3.0f, 4.0f};
     CHECK_THROWS(tensor[4]);
 
@@ -332,7 +345,8 @@ TEST_CASE("TensorTest - Indexing Operator - Out of Bound") {
     CHECK_THROWS(tensor[0, 0, 2]);
 }
 
-TEST_CASE("TensorTest - Indexing Operator - Negative Indexing") {
+TEST_CASE("TensorTest - Indexing Operator - Negative Indexing")
+{
     Tensor<> tensor = {1.0f, 2.0f, 3.0f, 4.0f};
     CHECK(tensor[-1] == 4.0f);
     CHECK(tensor[-2] == 3.0f);
@@ -350,7 +364,8 @@ TEST_CASE("TensorTest - Indexing Operator - Negative Indexing") {
     CHECK(tensor[0, -1, 0] == 3.0f);
 }
 
-TEST_CASE("TensorTest - Indexing Operator - Normal Slicing") {
+TEST_CASE("TensorTest - Indexing Operator - Normal Slicing")
+{
     Tensor<> tensor_1d = {1.0f, 2.0f, 3.0f, 4.0f};
     Tensor<> sliced_tensor_1d_1 = tensor_1d.index({":2"});
     CHECK(sliced_tensor_1d_1.ndim() == 1);
@@ -391,7 +406,8 @@ TEST_CASE("TensorTest - Indexing Operator - Normal Slicing") {
     CHECK(sliced_tensor_2d_1[1, 1] == 4.0f);
 }
 
-TEST_CASE("TensorTest - Transpose") {
+TEST_CASE("TensorTest - Transpose")
+{
     Tensor<> tensor_2d = {{1.0f, 2.0f}, {3.0f, 4.0f}};
     Tensor<> transposed_tensor_2d = tensor_2d.transpose();
     CHECK(transposed_tensor_2d.ndim() == 2);
@@ -415,50 +431,53 @@ TEST_CASE("TensorTest - Transpose") {
     CHECK(transposed_tensor_1d[-1, -1] == 4.0f);
 }
 
-TEST_CASE("TensorTest - flatten") {
+TEST_CASE("TensorTest - flatten")
+{
     Tensor<> tensor_2d = {{1.0f, 2.0f}, {3.0f, 4.0f}};
-    tensor_2d.flatten();
-    CHECK(tensor_2d.ndim() == 1);
-    CHECK(tensor_2d.size() == 4);
-    CHECK(tensor_2d.shapes()[0] == 4);
-    CHECK(tensor_2d[0] == 1.0f);
-    CHECK(tensor_2d[1] == 2.0f);
-    CHECK(tensor_2d[2] == 3.0f);
-    CHECK(tensor_2d[3] == 4.0f);
+    Tensor<> flattened_tensor_2d = tensor_2d.flatten();
+    CHECK(flattened_tensor_2d.ndim() == 1);
+    CHECK(flattened_tensor_2d.size() == 4);
+    CHECK(flattened_tensor_2d.shapes()[0] == 4);
+    CHECK(flattened_tensor_2d[0] == 1.0f);
+    CHECK(flattened_tensor_2d[1] == 2.0f);
+    CHECK(flattened_tensor_2d[2] == 3.0f);
+    CHECK(flattened_tensor_2d[3] == 4.0f);
 }
 
-TEST_CASE("TensorTest - reshape") {
+TEST_CASE("TensorTest - reshape")
+{
     Tensor<> tensor_2d = {{1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f}, {7.0f, 8.0f, 9.0f, 10.0f, 11.0f, 12.0f}};
-    tensor_2d.reshape({2, 3, 2});
-    CHECK(tensor_2d.ndim() == 3);
-    CHECK(tensor_2d.size() == 12);
-    CHECK(tensor_2d.shapes()[0] == 2);
-    CHECK(tensor_2d.shapes()[1] == 3);
-    CHECK(tensor_2d.shapes()[2] == 2);
-    CHECK(tensor_2d[0, 0, 0] == 1.0f);
-    CHECK(tensor_2d[0, 0, 1] == 2.0f);
-    CHECK(tensor_2d[0, 1, 0] == 3.0f);
-    CHECK(tensor_2d[0, 1, 1] == 4.0f);
-    CHECK(tensor_2d[0, 2, 0] == 5.0f);
-    CHECK(tensor_2d[0, 2, 1] == 6.0f);
-    CHECK(tensor_2d[1, 0, 0] == 7.0f);
-    CHECK(tensor_2d[-1, -1, -1] == 12.0f);
+    Tensor<> reshaped_tensor_2d = tensor_2d.reshape({2, 3, 2});
+    CHECK(reshaped_tensor_2d.ndim() == 3);
+    CHECK(reshaped_tensor_2d.size() == 12);
+    CHECK(reshaped_tensor_2d.shapes()[0] == 2);
+    CHECK(reshaped_tensor_2d.shapes()[1] == 3);
+    CHECK(reshaped_tensor_2d.shapes()[2] == 2);
+    CHECK(reshaped_tensor_2d[0, 0, 0] == 1.0f);
+    CHECK(reshaped_tensor_2d[0, 0, 1] == 2.0f);
+    CHECK(reshaped_tensor_2d[0, 1, 0] == 3.0f);
+    CHECK(reshaped_tensor_2d[0, 1, 1] == 4.0f);
+    CHECK(reshaped_tensor_2d[0, 2, 0] == 5.0f);
+    CHECK(reshaped_tensor_2d[0, 2, 1] == 6.0f);
+    CHECK(reshaped_tensor_2d[1, 0, 0] == 7.0f);
+    CHECK(reshaped_tensor_2d[-1, -1, -1] == 12.0f);
 
     Tensor<> tensor_1d = {1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f};
-    tensor_1d.reshape({2, 3});
-    CHECK(tensor_1d.ndim() == 2);
-    CHECK(tensor_1d.size() == 6);
-    CHECK(tensor_1d.shapes()[0] == 2);
-    CHECK(tensor_1d.shapes()[1] == 3);
-    CHECK(tensor_1d[0, 0] == 1.0f);
-    CHECK(tensor_1d[0, 1] == 2.0f);
-    CHECK(tensor_1d[0, 2] == 3.0f);
-    CHECK(tensor_1d[1, 0] == 4.0f);
-    CHECK(tensor_1d[1, 1] == 5.0f);
-    CHECK(tensor_1d[1, 2] == 6.0f);
+    Tensor<> reshaped_tensor_1d = tensor_1d.reshape({2, 3});
+    CHECK(reshaped_tensor_1d.ndim() == 2);
+    CHECK(reshaped_tensor_1d.size() == 6);
+    CHECK(reshaped_tensor_1d.shapes()[0] == 2);
+    CHECK(reshaped_tensor_1d.shapes()[1] == 3);
+    CHECK(reshaped_tensor_1d[0, 0] == 1.0f);
+    CHECK(reshaped_tensor_1d[0, 1] == 2.0f);
+    CHECK(reshaped_tensor_1d[0, 2] == 3.0f);
+    CHECK(reshaped_tensor_1d[1, 0] == 4.0f);
+    CHECK(reshaped_tensor_1d[1, 1] == 5.0f);
+    CHECK(reshaped_tensor_1d[1, 2] == 6.0f);
 }
 
-TEST_CASE("TensorTest - abs") {
+TEST_CASE("TensorTest - abs")
+{
     Tensor<> tensor_2d = {{-1.0f, -2.0f}, {3.0f, 4.0f}};
     Tensor<> abs_tensor_2d = tensor_2d.abs();
     CHECK(abs_tensor_2d.ndim() == 2);
@@ -471,7 +490,8 @@ TEST_CASE("TensorTest - abs") {
     CHECK(abs_tensor_2d[1, 1] == 4.0f);
 }
 
-TEST_CASE("TensorTest - sum") {
+TEST_CASE("TensorTest - sum")
+{
     Tensor<> tensor_1d = {1.0f, 2.0f, 3.0f, 4.0f};
     double sum_1d = tensor_1d.sum();
     CHECK(sum_1d == 10.0f);
@@ -485,9 +505,11 @@ TEST_CASE("TensorTest - sum") {
     CHECK(sum_3d == 36.0f);
 }
 
-TEST_CASE("TensorTest - filter") {
+TEST_CASE("TensorTest - filter")
+{
     Tensor<> tensor_1d = {1.0f, 2.0f, 3.0f, 4.0f};
-    Tensor<> filtered_tensor_1d = tensor_1d.filter([](double x) { return x < 3.0f; });
+    Tensor<> filtered_tensor_1d = tensor_1d.filter([](double x)
+                                                   { return x < 3.0f; });
     CHECK(filtered_tensor_1d.ndim() == 1);
     CHECK(filtered_tensor_1d.size() == 4);
     CHECK(filtered_tensor_1d.shapes()[0] == 4);
@@ -497,7 +519,8 @@ TEST_CASE("TensorTest - filter") {
     CHECK(filtered_tensor_1d[3] == 0.0f);
 
     Tensor<> tensor_2d = {{1.0f, 2.0f}, {3.0f, 4.0f}};
-    Tensor<> filtered_tensor_2d = tensor_2d.filter([](double x) { return x < 3.0f; });
+    Tensor<> filtered_tensor_2d = tensor_2d.filter([](double x)
+                                                   { return x < 3.0f; });
     CHECK(filtered_tensor_2d.ndim() == 2);
     CHECK(filtered_tensor_2d.size() == 4);
     CHECK(filtered_tensor_2d.shapes()[0] == 2);
@@ -508,7 +531,8 @@ TEST_CASE("TensorTest - filter") {
     CHECK(filtered_tensor_2d[1, 1] == 0.0f);
 
     Tensor<> tensor_3d = {{{1.0f, 2.0f}, {3.0f, 4.0f}}, {{5.0f, 6.0f}, {7.0f, 8.0f}}};
-    Tensor<> filtered_tensor_3d = tensor_3d.filter([](double x) { return x < 3.0f; });
+    Tensor<> filtered_tensor_3d = tensor_3d.filter([](double x)
+                                                   { return x < 3.0f; });
     CHECK(filtered_tensor_3d.ndim() == 3);
     CHECK(filtered_tensor_3d.size() == 8);
     CHECK(filtered_tensor_3d.shapes()[0] == 2);
@@ -524,11 +548,13 @@ TEST_CASE("TensorTest - filter") {
     CHECK(filtered_tensor_3d[1, 1, 1] == 0.0f);
 }
 
-TEST_CASE("TensorTest - map") {
+TEST_CASE("TensorTest - map")
+{
     double eps = 1e-5f;
 
     Tensor<> tensor_1d = {1.0f, 2.0f, 3.0f, 4.0f};
-    Tensor<> tensor_1d_exp = tensor_1d.map([](double x) { return exp(x); });
+    Tensor<> tensor_1d_exp = tensor_1d.map([](double x)
+                                           { return exp(x); });
     CHECK(tensor_1d_exp.ndim() == 1);
     CHECK(tensor_1d_exp.size() == 4);
     CHECK(tensor_1d_exp.shapes()[0] == 4);
@@ -538,7 +564,8 @@ TEST_CASE("TensorTest - map") {
     CHECK(tensor_1d_exp[3] - exp(4.0f) < eps);
 
     Tensor<> tensor_2d = {{1.0f, 2.0f}, {3.0f, 4.0f}};
-    Tensor<> tensor_2d_times_10 = tensor_2d.map([](double x) { return x * 10.0f; });
+    Tensor<> tensor_2d_times_10 = tensor_2d.map([](double x)
+                                                { return x * 10.0f; });
     CHECK(tensor_2d_times_10.ndim() == 2);
     CHECK(tensor_2d_times_10.size() == 4);
     CHECK(tensor_2d_times_10.shapes()[0] == 2);
@@ -549,7 +576,8 @@ TEST_CASE("TensorTest - map") {
     CHECK(tensor_2d_times_10[1, 1] == 40.0f);
 
     Tensor<> tensor_3d = {{{1.0f, 2.0f}, {3.0f, 4.0f}}, {{5.0f, 6.0f}, {7.0f, 8.0f}}};
-    Tensor<> tensor_3d_log = tensor_3d.map([](double x) { return log(x); });
+    Tensor<> tensor_3d_log = tensor_3d.map([](double x)
+                                           { return log(x); });
     CHECK(tensor_3d_log.ndim() == 3);
     CHECK(tensor_3d_log.size() == 8);
     CHECK(tensor_3d_log.shapes()[0] == 2);
@@ -565,7 +593,8 @@ TEST_CASE("TensorTest - map") {
     CHECK(tensor_3d_log[1, 1, 1] - log(8.0f) < eps);
 }
 
-TEST_CASE("TensorTest - equal") {
+TEST_CASE("TensorTest - equal")
+{
     Tensor<> tensor_1d = {1.0f, 2.0f, 3.0f, 4.0f};
     Tensor<> another_tensor_1d = {1.0f, 2.0f, 5.0f, 4.0f};
     Tensor<int> equal_tensor_1d = tensor_1d.equal(another_tensor_1d);
@@ -607,7 +636,8 @@ TEST_CASE("TensorTest - equal") {
     CHECK(equal_tensor_3d[1, 1, 1] == 1);
 }
 
-TEST_CASE("TensorTest - Matrix Multiplication") {
+TEST_CASE("TensorTest - Matrix Multiplication")
+{
     Tensor<> tensor_2d_1 = {{1.0f, 2.0f}, {3.0f, 4.0f}};
     Tensor<> transposed_tensor_2d_1 = tensor_2d_1.transpose();
     Tensor<> matrix_multiplication_2d_1 = tensor_2d_1.matmul(transposed_tensor_2d_1);
@@ -620,5 +650,4 @@ TEST_CASE("TensorTest - Matrix Multiplication") {
     CHECK(matrix_multiplication_2d_1[0, 1] == 11.0f);
     CHECK(matrix_multiplication_2d_1[1, 0] == 11.0f);
     CHECK(matrix_multiplication_2d_1[1, 1] == 25.0f);
-    
 }

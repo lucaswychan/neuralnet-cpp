@@ -114,9 +114,7 @@ bool MNIST::read_labels(const string& path) {
 
 tuple<Tensor<>, Tensor<>> Batch::to_tensor() {
     Tensor<> data = this->batch_data;
+    Tensor<> labels = this->batch_labels;
 
-    Tensor<int> labels_int = this->batch_labels;
-    Tensor<> labels = labels_int.dtype<double>();
-    
     return make_tuple(data, labels);
 }

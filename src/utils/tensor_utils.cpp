@@ -55,7 +55,6 @@ vector<size_t> apply_slice(const Slice& slice, size_t dim_size) {
     
     // cout << "start applying slice" << endl;
     for (size_t i = start; i < stop; i += step) {
-        // cout << "i: " << i << endl;
         indices.push_back(i);
     }
     return indices;
