@@ -41,10 +41,10 @@ Conv2d::Conv2d(size_t in_channels,
     this->padding_ = std::visit(process_variant, padding);
     this->dilation_ = std::visit(process_variant, dilation);
 
-    cout << "Kernel Size : " << this->kernel_size_.first << ", " << this->kernel_size_.second << endl;
-    cout << "Stride : " << this->stride_.first << ", " << this->stride_.second << endl;
-    cout << "Padding : " << this->padding_.first << ", " << this->padding_.second << endl;
-    cout << "Dilation : " << this->dilation_.first << ", " << this->dilation_.second << endl;
+    // cout << "Kernel Size : " << this->kernel_size_.first << ", " << this->kernel_size_.second << endl;
+    // cout << "Stride : " << this->stride_.first << ", " << this->stride_.second << endl;
+    // cout << "Padding : " << this->padding_.first << ", " << this->padding_.second << endl;
+    // cout << "Dilation : " << this->dilation_.first << ", " << this->dilation_.second << endl;
 
     // Check if padding mode is valid
     unordered_map<string, PaddingMode> all_padding_modes = {{"zeros", PaddingMode::ZEROS}, {"reflect", PaddingMode::REFLECT}, {"replicate", PaddingMode::REPLICATE}};
@@ -99,8 +99,16 @@ Tensor<> Conv2d::backward(const Tensor<> &grad_output)
     Tensor<> permuted_input = this->input_cache_.permute(1, 0, 2, 3);
     Tensor<> permuted_grad_output = grad_output.permute(1, 0, 2, 3);
 
-    this->grad_weight_ = convolution(this->dilation_, this->stride_, this->weight_.shapes(), permuted_input, permuted_grad_output, Tensor<>(), false);
+    // The grad weight shape is initially permuted
+    const vector<size_t> permuted_grad_weight_shape = {this->in_channels_, this->out_channels_, this->kernel_size_.first, this->kernel_size_.second};
 
+    this->grad_weight_ = convolution(this->dilation_, this->stride_, permuted_grad_weight_shape, permuted_input, permuted_grad_output, Tensor<>(), false);
+
+    cout << "grad_weight: " << endl;
+    this->grad_weight_.print();
+    cout << endl;
+
+    // The grad weight shape is permuted back to the original shape
     this->grad_weight_ = this->grad_weight_.permute(1, 0, 2, 3);
 
     // dL_dB = sum(dL_dY, dims=(0, 2, 3))
@@ -120,11 +128,24 @@ Tensor<> Conv2d::backward(const Tensor<> &grad_output)
                 }
             }
         }
+
+        cout << "grad_bias: " << endl;
+        this->grad_bias_.print();
+        cout << endl;
     }
 
     // dL_dX = fullconv(dL_dY, W)
     Tensor<> flipped_weight = flip_vertical_and_horizontal(this->weight_);
+    cout << "flipped_weight: " << endl;
+    flipped_weight.print();
+    cout << endl;
+
+    
     Tensor<> permuted_flipped_weight = flipped_weight.permute(1, 0, 2, 3);
+
+    cout << "permuted_flipped_weight: " << endl;
+    permuted_flipped_weight.print();
+    cout << endl;
 
     Tensor<> copy_grad_output = grad_output;
 

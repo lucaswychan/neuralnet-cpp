@@ -189,12 +189,14 @@ Tensor<> flip_vertical_and_horizontal(const Tensor<> &input)
         throw std::invalid_argument("Input shape must be 4D");
     }
 
-    Tensor<> output(input.shapes(), 0.0);
+    Tensor<> output = input;
 
     const size_t B = input.shapes()[0];
     const size_t C = input.shapes()[1];
     const size_t H = input.shapes()[2];
     const size_t W = input.shapes()[3];
+
+    double cache;
 
     for (size_t b = 0; b < B; ++b)
     {
@@ -204,16 +206,18 @@ Tensor<> flip_vertical_and_horizontal(const Tensor<> &input)
             {
                 for (size_t w = 0; w < W; ++w)
                 {
-                    output[b, c, h, w] = input[b, c, H - h - 1, w];
-                    output[b, c, H - h - 1, w] = input[b, c, h, w];
+                    cache = output[b, c, h, w];
+                    output[b, c, h, w] = output[b, c, H - h - 1, w];
+                    output[b, c, H - h - 1, w] = cache;
                 }
             }
             for (size_t h = 0; h < H; ++h)
             {
                 for (size_t w = 0; w < W / 2; ++w)
                 {
-                    output[b, c, h, w] = input[b, c, h, W - w - 1];
-                    output[b, c, h, W - w - 1] = input[b, c, h, w];
+                    cache = output[b, c, h, w];
+                    output[b, c, h, w] = output[b, c, h, W - w - 1];
+                    output[b, c, h, W - w - 1] = cache;
                 }
             }
         }
