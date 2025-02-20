@@ -481,6 +481,18 @@ public:
         return result;
     }
 
+    // Divide all elements of tensor with the given scaler
+    Tensor<T> div(const T &scaler) const
+    {
+        Tensor<T> result = *this;
+
+        for (size_t i = 0; i < this->size(); i++)
+        {
+            (*result.data_)[i] /= scaler;
+        }
+        return result;
+    }
+
     /**
      * Matrix multiplication of two tensors.
      *
@@ -611,9 +623,8 @@ public:
 
         if (ndim == 1 && dim0 == -2 && dim1 == -1)
         {
-            Tensor result = *this;
-            result.reshape({this->size(), 1});
-            return result;
+            Tensor<T> result = *this;
+            return result.reshape({this->size(), 1});
         }
 
         if (dim0 == dim1)
@@ -696,14 +707,60 @@ public:
         return result;
     }
 
-    /// @brief Flatten the tensor into 1D in-place.
-    /// @details This function only changes the shape of the tensor, and does not modify the underlying data.
-    /// @post The shape of the tensor is changed to 1D, with the same elements as the original tensor.
-    void flatten()
+    /**
+     * Flattens the dimensions of the tensor from start_dim to end_dim into a single dimension.
+     *
+     * This function collapses multiple dimensions of the tensor into one, effectively reducing
+     * the number of dimensions by merging the specified range of dimensions. If start_dim or
+     * end_dim is negative, it will be counted from the last dimension backwards. The resulting
+     * tensor will have the same total number of elements as the original tensor.
+     *
+     * @param start_dim The starting dimension index to begin flattening. Defaults to 0.
+     * @param end_dim The ending dimension index to stop flattening. Defaults to -1, which
+     *                refers to the last dimension.
+     * @return A new tensor with the specified dimensions flattened.
+     *
+     * @throws std::invalid_argument if start_dim is greater than end_dim.
+     * @throws std::out_of_range if start_dim or end_dim is out of the range of the tensor's dimensions.
+     */
+
+    Tensor<> flatten(int64_t start_dim = 0, int64_t end_dim = -1) const
     {
-        this->shape_ = {this->size()};
-        this->compute_contiguous_strides();
-        return;
+        if (start_dim < 0)
+        {
+            start_dim += this->ndim();
+        }
+        if (end_dim < 0)
+        {
+            end_dim += this->ndim();
+        }
+
+        if (start_dim > end_dim)
+        {
+            throw invalid_argument("Start dimension must be less than or equal to end dimension");
+        }
+
+        if (start_dim < 0 || start_dim >= this->ndim() || end_dim < 0 || end_dim >= this->ndim())
+        {
+            throw out_of_range("Flatten dimensions out of range");
+        }
+
+        vector<size_t> new_shape;
+        new_shape.reserve(this->ndim() - (end_dim - start_dim + 1) + 1);
+
+        for (size_t i = 0; i < this->ndim(); ++i)
+        {
+            if (i <= start_dim || i > end_dim)
+            {
+                new_shape.push_back(this->shape_[i]);
+            }
+            else
+            {
+                new_shape[new_shape.size() - 1] *= this->shape_[i];
+            }
+        }
+
+        return this->reshape(new_shape);
     }
 
     /// @brief Calculate the absolute value of each element in the tensor
@@ -729,9 +786,9 @@ public:
 
         for (size_t i = 0; i < this->size(); i++)
         {
-            if (func((*this->data_)[i]))
+            if (!func((*this->data_)[i]))
             {
-                (*result.data_)[i] = (*this->data_)[i];
+                (*result.data_)[i] = static_cast<T>(0);
             }
         }
 
@@ -855,7 +912,7 @@ public:
     /// The total number of elements must remain the same; otherwise, an exception is thrown.
     /// @param new_shape The desired shape for the tensor.
     /// @throws runtime_error if the new shape is not compatible with the current number of elements.
-    void reshape(const vector<size_t> &new_shape)
+    Tensor<> reshape(const vector<size_t> &new_shape) const
     {
         // Calculate total elements for both shapes
         const int64_t current_elements = accumulate(
@@ -868,6 +925,7 @@ public:
             throw runtime_error("New shape must be compatible with the original shape");
         }
 
+        // Check if the data is stored in a contiguous way
         vector<size_t> original_strides(this->ndim(), 0);
         int64_t stride = 1;
 
@@ -877,18 +935,40 @@ public:
             stride *= this->shape_[i];
         }
 
+        Tensor<T> result;
+
+        // If the data is not stored in a contiguous way, the stride will not be a cumulative product of the shape
         if (original_strides != this->strides_)
         {
             cout << "Clone the tensor" << endl;
+            /*
+            This part is a little bit complicated
+
+            Since the data may not store in a contiguous way, there is a problem when we directly change the shape of the tensor.
+            We will loss the tracking of the strides of the tensor.
+
+            Therefore we have to make the data stored in a contiguous way first, then we can change the shape of the tensor.
+            clone() function will create a new tensor with the same shape and data as the current tensor.
+
+            If we directly use copy constructor, the data will not be stored in a contiguous way.
+            Since I don't rearange the data in the copy constructor.
+
+            Eventully the tensor data is guaranteed to be stored in the contiguous way, so we can directly change the shape of the tensor.
+            */
+
             // Create a new tensor with contiguous data
-            Tensor<T> result = this->clone();
-            *this = result;
+            result = this->clone();
+        }
+        else
+        {
+            // the data is not stored in a contiguous way
+            result = *this;
         }
 
-        this->shape_ = new_shape;
-        this->compute_contiguous_strides();
+        result.shape_ = new_shape;
+        result.compute_contiguous_strides();
 
-        return;
+        return result;
     }
 
     /// @brief Return a deep copy of the tensor. The data is copied to a new contiguous storage (and this is the only difference from copy constructor).
@@ -993,6 +1073,8 @@ public:
     inline Tensor<T> operator-(const Tensor<T> &other) const { return this->sub(other); }
     inline Tensor<T> operator*(const Tensor<T> &other) const { return this->mul(other); }
     inline Tensor<T> operator*(const T &scaler) const { return this->mul(scaler); }
+    inline Tensor<T> operator/(const Tensor<T> &other) const { return this->div(other); }
+    inline Tensor<T> operator/(const T &scaler) const { return this->div(scaler); }
     inline bool operator==(const Tensor<T> &other) const { return this->compare(other); }
 
     /*
@@ -1035,6 +1117,18 @@ public:
     const Tensor<T> operator*=(const T &other)
     {
         *this = *this * other;
+        return *this;
+    }
+
+    const Tensor<T> operator/=(const Tensor<T> &other)
+    {
+        *this = *this / other;
+        return *this;
+    }
+
+    const Tensor<T> operator/=(const T &other)
+    {
+        *this = *this / other;
         return *this;
     }
 
