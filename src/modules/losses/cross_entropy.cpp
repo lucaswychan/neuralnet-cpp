@@ -81,7 +81,7 @@ Tensor<> CrossEntropyLoss::backward()
         grad_output[i, static_cast<int>(this->Y_cache_[i])] -= 1.0f;
     }
 
-    grad_output *= 1.0f / B;
+    grad_output /= B;
 
     return grad_output;
 }

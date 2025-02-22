@@ -14,7 +14,7 @@ Tensor<> Softmax::softmax_helper(const Tensor<> &input)
                                 { return exp(x); });
     double sum = result.sum();
 
-    return result * (1 / sum);
+    return result / sum;
 }
 
 vector<double> Softmax::softmax_helper(const vector<double> &input)
