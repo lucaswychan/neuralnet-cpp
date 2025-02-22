@@ -2,6 +2,7 @@
 #include "module.hpp"
 using namespace nn;
 
+
 class MLP : public Module {
     public:
         MLP(vector<size_t> layer_sizes, double dropout_p = 0.5);
