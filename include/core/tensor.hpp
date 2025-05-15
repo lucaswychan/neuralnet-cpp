@@ -2,7 +2,7 @@
 #include "tensor_utils.hpp"
 using namespace std;
 
-template <typename T = double>
+template <typename T = float>
 class Tensor
 {
 private:
@@ -312,35 +312,6 @@ public:
         this->compute_contiguous_strides();
     }
 
-    // // Recursive helper to process nested initializer lists
-    // template<typename U>
-    // void flatten_list(const std::initializer_list<U>& list, size_t depth = 0) {
-    //     // Handle the current dimension
-    //     if (depth == shapes_.size()) {
-    //         // First encounter with this depth: record size
-    //         shapes_.push_back(list.size());
-    //     } else {
-    //         // Verify size matches the existing dimension
-    //         if (list.size() != shapes_[depth]) {
-    //             throw std::invalid_argument("Inconsistent shape at depth " + std::to_string(depth));
-    //         }
-    //     }
-
-    //     // Recurse or add data
-    //     if constexpr (is_list<U>::value) {
-    //         // Process nested lists
-    //         for (const auto& elem : list) {
-    //             flatten_list(elem, depth + 1);
-    //         }
-    //     } else {
-    //         // Ensure element type matches Tensor type
-    //         // static_assert(std::is_same_v<U, T>, "Element type must match Tensor type");
-    //         for (const auto& elem : list) {
-    //             data_.push_back(static_cast<T>(elem));
-    //         }
-    //     }
-    // }
-
     // Scaler constructor
     Tensor(const T &value)
     {
@@ -432,10 +403,27 @@ public:
     }
 
     // copy constructor
+    // Direct initialization with member initializer lists is more efficient than first default-constructing members and then assigning values.
     Tensor(const Tensor<T> &other)
+        : data_(make_shared<vector<T>>(*(other.data_))),
+          shape_(other.shape_),
+          strides_(other.strides_),
+          offset_(other.offset_),
+          size_(other.size_)
     {
-        // already overload the = operator
-        *this = other;
+    }
+
+    // move constructor
+    Tensor(Tensor<T> &&other) noexcept
+        : data_(std::move(other.data_)),
+          shape_(std::move(other.shape_)),
+          strides_(std::move(other.strides_)),
+          offset_(other.offset_),
+          size_(other.size_)
+    {
+        // Reset other to a valid but empty state
+        other.offset_ = 0;
+        other.size_ = -1;
     }
 
     // template <typename V>
@@ -724,7 +712,7 @@ public:
      * @throws std::out_of_range if start_dim or end_dim is out of the range of the tensor's dimensions.
      */
 
-    Tensor<> flatten(int64_t start_dim = 0, int64_t end_dim = -1) const
+    Tensor<T> flatten(int64_t start_dim = 0, int64_t end_dim = -1) const
     {
         if (start_dim < 0)
         {
@@ -898,10 +886,10 @@ public:
     }
 
     /// @brief Convert the tensor to a tensor of a different type.
-    /// @details If U is not provided, it defaults to double.
+    /// @details If U is not provided, it defaults to float.
     /// @param U the type to convert to
     /// @return a tensor with the same shape and data, but with the type U
-    template <typename U = double>
+    template <typename U = float>
     Tensor<U> dtype() const
     {
         return dtype_impl<T, U>(*this);
@@ -1093,6 +1081,27 @@ public:
         this->offset_ = other.offset_;
         this->size_ = other.size_;
 
+        return *this;
+    }
+
+    // move assignment operator
+    Tensor<T> &operator=(Tensor<T> &&other) noexcept
+    {
+        if (this != &other) {
+            // Move resources from other to this
+            this->data_ = std::move(other.data_);
+            this->shape_ = std::move(other.shape_);
+            this->strides_ = std::move(other.strides_);
+            this->offset_ = other.offset_;
+            this->size_ = other.size_;
+            
+            // Reset other to a valid but empty state
+            other.shape_.clear();
+            other.strides_.clear();
+            other.offset_ = 0;
+            other.size_ = -1;
+            // Note: other.data_ remains a valid empty shared_ptr after std::move
+        }
         return *this;
     }
 
