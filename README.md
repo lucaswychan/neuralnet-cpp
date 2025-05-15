@@ -32,6 +32,8 @@ brew install cmake
 brew install gcc
 ```
 
+If there is any problem, please try uninstalling `cmake` and `gcc`, and reinstalling them afterward. 
+
 For **Linux**, run the following commands:
 
 ```bash
@@ -65,6 +67,41 @@ I implemented a tensor from scratch as well and integrate it to my neural networ
 
 For more details about tensor, please refer to [tensor tutorial](docs/tensor.md).
 
+## Sequential Container
+
+To simply create your own neural network by stacking layers, feel free to use [`Sequential`](include/modules/containers/sequential.hpp). It is similar to keras `Sequential` (Although this repo should be a pytorch-like implementation :) )
+
+### Example Usage
+
+```cpp
+#include "sequential.hpp"
+#include "module.hpp"
+#include "linear.hpp"
+#include "relu.hpp"
+#include "dropout.hpp"
+#include <vector>
+using namespace std;
+
+vector<Module*> layers = { new Linear(768, 256), 
+                           new ReLU(), 
+                           new Dropout(0.2),
+                           new Linear(256, 128),
+                           new ReLU(),
+                           new Dropout(0.2),
+                           new Linear(128, 10),
+                         }
+
+Sequential container = layers;
+
+/*
+To perform forward pass, simply do 'output = container(input)'
+
+Similarily, do 'container.backward(grad_output)' to perform backward pass.
+
+For more details, please check main.cpp in examples
+*/
+```
+
 ## Module API
 
 The module API is defined in [`include/core/module.hpp`](include/core/module.hpp).
@@ -74,7 +111,7 @@ To build your custom module, follow the instructions in `include/core/module.hpp
 ### Example usage
 
 ```cpp
-#include <module.hpp>
+#include "module.hpp"
 using namespace nn;
 
 // Your code here
