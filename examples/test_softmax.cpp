@@ -69,7 +69,7 @@ int main() {
     Tensor<> output_softmax = softmax.forward(output_1);
     Tensor<> output_2 = linear_2.forward(output_softmax);
 
-    double cross_entropy_loss = criterion.forward(output_2, label);
+    float cross_entropy_loss = criterion.forward(output_2, label);
 
     cout << "cross entropy loss: " << cross_entropy_loss << endl;
 

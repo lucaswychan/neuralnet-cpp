@@ -5,34 +5,32 @@
 #include "dropout.hpp"
 using namespace nn;
 
-int main() {
-        const bool bias = true;
+int main()
+{
+    const bool bias = true;
 
     Linear linear_1(3, 5, bias);
     Linear linear_2(5, 7, bias);
-    Dropout dropout(0.3);
+    // Dropout dropout(0.3);
 
     Tensor<> specific_weights_1 = {
         {0.1, 0.4, 0.7, 1.0, 1.3},
         {0.2, 0.5, 0.8, 1.1, 1.4},
-        {0.3, 0.6, 0.9, 1.2, 1.5}
-    };
-    
+        {0.3, 0.6, 0.9, 1.2, 1.5}};
+
     Tensor<> specific_weights_2 = {
         {0.1, 0.6, 1.1, 1.6, 2.1, 2.6, 3.1},
         {0.2, 0.7, 1.2, 1.7, 2.2, 2.7, 3.2},
         {0.3, 0.8, 1.3, 1.8, 2.3, 2.8, 3.3},
         {0.4, 0.9, 1.4, 1.9, 2.4, 2.9, 3.4},
-        {0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5}
-    };
+        {0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5}};
 
     Tensor<> specific_bias_1 = {
         0.1,
         0.2,
         0.3,
         0.4,
-        0.5
-    };
+        0.5};
 
     Tensor<> specific_bias_2 = {
         0.1,
@@ -41,15 +39,13 @@ int main() {
         0.4,
         0.5,
         0.6,
-        0.7
-    };
+        0.7};
 
     Tensor<> input = {
         {1.1f, 2.1f, 3.1f},
         {4.1f, 5.1f, 6.1f},
         {7.1f, 8.1f, 9.1f},
-        {10.1f, 11.1f, 12.1f}
-    };
+        {10.1f, 11.1f, 12.1f}};
 
     cout << "After initialization: " << endl;
 
@@ -62,17 +58,17 @@ int main() {
     cout << "bias 2: " << endl;
     specific_bias_2.print();
 
-    linear_1.setWeights(specific_weights_1);
-    linear_2.setWeights(specific_weights_2);
+    linear_1.set_weight(specific_weights_1);
+    linear_2.set_weight(specific_weights_2);
 
-    linear_1.setBiases(specific_bias_1);
-    linear_2.setBiases(specific_bias_2);
+    linear_1.set_bias(specific_bias_1);
+    linear_2.set_bias(specific_bias_2);
 
     cout << endl;
 
     Tensor<> output_1 = linear_1(input);
-    Tensor<> output_2 = dropout(output_1);
-    Tensor<> Y_hat = linear_2(output_2);
+    // Tensor<> output_2 = dropout(output_1);
+    Tensor<> Y_hat = linear_2(output_1);
 
     cout << "Y_hat: " << endl;
     Y_hat.print();
@@ -83,8 +79,9 @@ int main() {
         {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0},
         {0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0},
         {0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0},
-        {0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0}
-    };
+        {0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0}};
+
+    Tensor<> Y_not_one_hot = {6, 4, 3, 2};
 
     MSE mse;
     CrossEntropyLoss cross_entropy_loss;
@@ -96,9 +93,8 @@ int main() {
 
     Tensor<> dL_dZ = cross_entropy_loss.backward();
     Tensor<> dL_dY_dot = linear_2.backward(dL_dZ);
-    Tensor<> dL_dY = dropout.backward(dL_dY_dot);
-    Tensor<> dL_dX = linear_1.backward(dL_dY);
-
+    // Tensor<> dL_dY = dropout.backward(dL_dY_dot);
+    Tensor<> dL_dX = linear_1.backward(dL_dY_dot);
 
     // ===================softmax=====================
 
