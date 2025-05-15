@@ -7,7 +7,7 @@ namespace nn
     class Linear : public Module
     {
     public:
-        Linear(size_t in_features, size_t out_features, bool bias);
+        Linear(size_t in_features, size_t out_features, bool bias = true);
 
         virtual Tensor<> forward(const Tensor<> &input) override;
         virtual Tensor<> backward(const Tensor<> &grad_output) override;
