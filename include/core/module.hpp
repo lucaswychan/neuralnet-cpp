@@ -32,9 +32,20 @@ class Module {
 
         /**
          * Virtual function to update the parameters of the module.
+         * Some modules do not have parameters to update (e.g., ReLU, Dropout), so this function can be empty.
          * @param lr The learning rate for the update.
          */
         virtual void update_params(const float lr) { return; };
+
+        /**
+         * Virtual function to create a deep copy of the module.
+         * This should be overridden by derived classes to create a proper deep copy.
+         * 
+         * @return A pointer to a new Module instance that is a deep copy of this module.
+         */
+        virtual Module* clone() const {
+            throw std::runtime_error("clone() method not implemented for this module type");
+        }
 
         /**
          * Operator overload to enable calling the module like a function.
@@ -45,8 +56,39 @@ class Module {
             return this->forward(input);
         }
 
-        inline void train(const bool mode = true) { this->training = mode; }
-        inline void eval() { this->training = false; }
+        /**
+         * Sets the module in training mode (train=true) or evaluation mode (train=false).
+         * This affects certain modules like Dropout and BatchNorm whose behavior differs
+         * between training and evaluation.
+         * 
+         * @param mode If true, sets the module to training mode, otherwise to evaluation mode.
+         * @return A reference to this module for method chaining.
+         */
+        virtual Module& train(const bool mode = true) { 
+            this->training = mode; 
+            apply_to_children([mode](Module& child) { child.train(mode); });
+            return *this;
+        }
+
+        /**
+         * Sets the module in evaluation mode. This affects certain modules like Dropout
+         * and BatchNorm whose behavior differs between training and evaluation.
+         * 
+         * This method also propagates to any child modules that might be members of this module.
+         * 
+         * @return A reference to this module for method chaining.
+         */
+        virtual Module& eval() { 
+            this->training = false;
+            apply_to_children([](Module& child) { child.eval(); });
+            return *this; 
+        }
+
+        /**
+         * Check if the module is in training mode.
+         * 
+         * @return true if the module is in training mode, false otherwise.
+         */
         inline bool is_training() const { return this->training; }
     
     protected:
@@ -55,6 +97,17 @@ class Module {
          */
         Tensor<> input_cache_;
         bool training = true;
+
+        /**
+         * Virtual method to apply a function to all child modules.
+         * Modules that contain other modules should override this method.
+         * 
+         * @param fn A function that takes a Module reference and returns void.
+         */
+        virtual void apply_to_children(const function<void(Module&)>& fn) {
+            // Default implementation does nothing
+            // Modules with children should override this
+        }
 };
 
 }
