@@ -2,7 +2,6 @@
 #include <utility>
 #include "module.hpp"
 #include "conv2d_utils.hpp"
-using namespace nn;
 
 namespace nn
 {
@@ -25,11 +24,13 @@ namespace nn
 
         void reset_parameters();
 
-        void set_weight(const Tensor<> &target_weight) { this->weight_ = target_weight; }
-        void set_bias(const Tensor<> &target_bias) { this->bias_ = target_bias; }
+        // Setters
+        inline void set_weight(const Tensor<> &target_weight) { this->weight_ = target_weight; }
+        inline void set_bias(const Tensor<> &target_bias) { this->bias_ = target_bias; }
 
-        const Tensor<> &get_weight() const { return this->weight_; }
-        const Tensor<> &get_bias() const { return this->bias_; }
+        // Getters
+        inline const Tensor<> &get_weight() const { return this->weight_; }
+        inline const Tensor<> &get_bias() const { return this->bias_; }
 
     private:
         size_t in_channels_;
@@ -42,6 +43,7 @@ namespace nn
         PaddingMode padding_mode_;
         Padding padding_module_;
         vector<size_t> original_input_shape_;
+
         Tensor<> weight_;
         Tensor<> bias_;
         Tensor<> grad_weight_;

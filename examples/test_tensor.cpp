@@ -1,131 +1,119 @@
-#include "tensor.hpp"
 #include <math.h>
+#include "tensor.hpp"
+#include <chrono>
+using namespace std::chrono;
+using namespace std;
 
-int main() {
-    Tensor<> tensor_1d {1.0f, 2.0f, 3.0f, 4.0f, 5.0f};
-    Tensor<> tensor_2d {{1.0f, 2.0f, 3.0f}, {4.0f, 5.0f, 6.0f}, {7.0f, 8.0f, 9.0f}};
-    Tensor<> tensor_3d {{{1.0f, 2.0f, 3.0f}, {4.0f, 5.0f, 6.0f}, {7.0f, 8.0f, 9.0f}}, {{10.0f, 11.0f, 12.0f}, {13.0f, 14.0f, 15.0f}, {16.0f, 17.0f, 18.0f}}};
+int main()
+{
+    Tensor<> tensor_1d{1.0f, 2.0f, 3.0f, 4.0f, 5.0f};
+    cout << "finished creating tensor_1d" << endl;
 
-    // Tensor<> tensor_random({2, 4}, -2.0f);
+    Tensor<> tensor_2d{{1.0f, 2.0f, 3.0f}, {4.0f, 5.0f, 6.0f}, {7.0f, 8.0f, 9.0f}};
+    cout << "finished creating tensor_2d" << endl;
 
-    // Tensor<> tensor_negative {{-1.1f, -2.1f, -3.1f}, {-4.0f, -5.0f, -6.0f}, {-7.0f, -8.0f, -9.0f}};
+    Tensor<> tensor_3d{{{1.0f, 2.0f, 3.0f}, {4.0f, 5.0f, 6.0f}, {7.0f, 8.0f, 9.0f}}, {{10.0f, 11.0f, 12.0f}, {13.0f, 14.0f, 15.0f}, {16.0f, 17.0f, 18.0f}}};
+    cout << "finished creating tensor_3d" << endl;
 
-    // Tensor<> copy_tensor_2d = tensor_2d;
+    Tensor<> tensor_random({2, 4}, -2.0f);
+    cout << "finished creating tensor_random" << endl;
 
-    // cout << "Tensor 1D: " << endl;
-    // tensor_1d.print();
-    // cout << endl;
+    Tensor<> tensor_negative{{-1.1f, -2.1f, -3.1f}, {-4.0f, -5.0f, -6.0f}, {-7.0f, -8.0f, -9.0f}};
+    cout << "finished creating tensor_negative" << endl;
 
-    // cout << "Tensor 2D: " << endl;
-    // tensor_2d.print();
-    // cout << endl;
+    Tensor<> copy_tensor_2d = tensor_2d;
+    cout << "finished creating copy_tensor_2d" << endl;
 
-    // cout << "Tensor 3D: " << endl;
-    // tensor_3d.print();
-    // cout << endl;
+    cout << "Tensor 1D: " << endl;
+    tensor_1d.print();
+    cout << endl;
 
-    // cout << "Tensor Random: " << endl;
-    // tensor_random.print();
-    // cout << endl;
+    cout << "Tensor 2D: " << endl;
+    tensor_2d.print();
+    cout << endl;
 
-    // Tensor<> transposed_2d = tensor_2d.transpose();
+    cout << "Tensor 3D: " << endl;
+    tensor_3d.print();
+    cout << endl;
 
-    // cout << "Transposed Tensor 2D: " << endl;
-    // transposed_2d.print();
-    // cout << endl;
+    cout << "Tensor Random: " << endl;
+    tensor_random.print();
+    cout << endl;
 
-    // Tensor<> transposed_1d = tensor_1d.transpose();
+    Tensor<> transposed_2d = tensor_2d.transpose();
 
-    // cout << "Transposed Tensor 1D: " << endl;
-    // transposed_1d.print();
-    // cout << endl;
+    cout << "Transposed Tensor 2D: " << endl;
+    transposed_2d.print();
+    cout << endl;
 
-    // Tensor<> mat_mul_tensor = tensor_2d.matmul(transposed_2d);
+    Tensor<> transposed_1d = tensor_1d.transpose();
 
-    // cout << "Matrix Multiplication Result: " << endl;
-    // mat_mul_tensor.print();
-    // cout << endl;
+    cout << "Transposed Tensor 1D: " << endl;
+    transposed_1d.print();
+    cout << endl;
 
-    // Tensor<> mul_tensor_vector = tensor_2d * transposed_2d;
+    Tensor<> mat_mul_tensor = tensor_2d.matmul(transposed_2d);
 
-    // cout << "Vector Multiplication Result: " << endl;
-    // mul_tensor_vector.print();
-    // cout << endl;
+    cout << "Matrix Multiplication Result: " << endl;
+    mat_mul_tensor.print();
+    cout << endl;
 
-    // tensor_2d[1, 2] = 100.0f;
+    Tensor<> mul_tensor_vector = tensor_2d * transposed_2d;
 
-    // tensor_2d[0, 2] = 202.0f;
+    cout << "Vector Multiplication Result: " << endl;
+    mul_tensor_vector.print();
+    cout << endl;
 
-    // tensor_2d[2, 2] = 200.0f;
+    Tensor<> tensor_positive = tensor_negative.abs();
 
-    // auto row1 = tensor_2d.row(1);
+    cout << "Positive Tensor: " << endl;
+    tensor_positive.print();
+    cout << endl;
 
-    // row1[0] = 300.0f;
-    // row1[1] = 400.0f;
-    // row1[2] = 500.0f;
-    // cout << endl;
+    cout << "copy tensor 2d: " << endl;
+    copy_tensor_2d.print();
+    cout << endl;
 
-    // cout << "Updated Tensor 2D: " << endl;
-    // tensor_2d.print();
-    // cout << endl;
+    Tensor<> origional_tensor_2d = tensor_2d.clone();
 
-    // auto row_3d_1 = tensor_3d.col(0);
+    tensor_2d += tensor_2d;
 
-    // row_3d_1[0] = 300.0f;
-    // row_3d_1[1] = 400.0f;
-    // row_3d_1[2] = 400.0f;
-    // cout << endl;
+    cout << "tensor_2d += tensor_2d: " << endl;
+    tensor_2d.print();
+    cout << endl;
 
+    Tensor<> filtered_tensor = tensor_3d.filter([](float value)
+                                                { return value <= 10.0f; });
 
-    // cout << "Updated Tensor 3D: " << endl;
-    // tensor_3d.print();
-    // cout << endl;
+    cout << "fitlered_values <= 10: " << endl;
+    filtered_tensor.print();
+    cout << endl;
 
-    // Tensor<> tensor_positive = tensor_negative.abs();
+    cout << "finding max value in tensor_2d: " << endl;
 
-    // cout << "Positive Tensor: " << endl;
-    // tensor_positive.print();
-    // cout << endl;
+    Tensor<size_t> max_tensor_2d = tensor_2d.argmin();
 
-    // cout << "copy tensor 2d: " << endl;
-    // copy_tensor_2d.print();
-    // cout << endl;
+    cout << "max_tensor_2d: " << endl;
+    max_tensor_2d.print();
+    cout << endl;
 
-    // tensor_2d += tensor_2d;
-    // tensor_2d[1, 1] = 1200.14f;
-    // tensor_2d[1, 0] = 1300.14f;
+    Tensor<size_t> max_tensor_1d = tensor_1d.argmin();
 
-    // cout << "tensor_2d += tensor_2d: " << endl;
-    // tensor_2d.print();
-    // cout << endl;
+    cout << "max_tensor_1d: " << endl;
+    max_tensor_1d.print();
+    cout << endl;
 
-    // Tensor<> filtered_tensor = tensor_3d.filter([](double value) {
-    //     return value <= 10.0f;
-    // });
+    Tensor<int> equal_tensor_2d = tensor_2d.equal(tensor_2d);
 
-    // cout << "fitlered_values: " << endl;
-    // filtered_tensor.print();
-    // cout << endl;
+    cout << "equal_tensor_2d: " << endl;
+    equal_tensor_2d.print();
+    cout << endl;
 
-    // cout << "finding max value in tensor_2d: " << endl;
+    Tensor<int> equal_tensor_2d_original_transposed = origional_tensor_2d.equal(transposed_2d);
 
-    // Tensor<size_t> max_tensor_2d = tensor_2d.argmin();
-
-    // cout << "max_tensor_2d: " << endl;
-    // max_tensor_2d.print();
-    // cout << endl;
-
-    // Tensor<size_t> max_tensor_1d = tensor_1d.argmin();
-
-    // cout << "max_tensor_1d: " << endl;
-    // max_tensor_1d.print();
-    // cout << endl;
-
-    // Tensor<int> equal_tensor = tensor_2d.equal(tensor_2d);
-
-    // cout << "equal_tensor: " << endl;
-    // equal_tensor.print();
-    // cout << endl;
+    cout << "equal_tensor_2d_original_transposed: " << endl;
+    equal_tensor_2d_original_transposed.print();
+    cout << endl;
 
     Tensor<> first_row_tensor_3d = tensor_3d.index({":", 0u, ":"});
 
@@ -133,15 +121,59 @@ int main() {
     first_row_tensor_3d.print();
     cout << endl;
 
-    double last_value = tensor_3d[-1, 0, 1];
+    float last_value = tensor_3d[-1, 0, 1];
     cout << "last_value: " << last_value << endl;
 
-    Tensor<> A = { { 1, 2, 3 },
-                  { 4, 5, 6 } }; // 2 x 3
+    Tensor<> A = {{1, 2, 3},
+                  {4, 5, 6}}; // 2 x 3
 
-    Tensor<> A_mapped = A.map([](double x) { return exp(x); });
+    Tensor<> A_mapped = A.map([](float x)
+                              { return exp(x); });
 
     A_mapped.print();
+
+    Tensor<> new_tensor_3d = {{{1.0f, 2.0f}, {3.0f, 4.0f}}, {{5.0f, 6.0f}, {7.0f, 8.0f}}};
+    Tensor<> tensor_3d_log = new_tensor_3d.map([](float x)
+                                               { return log(x); });
+
+    cout << "tensor_3d_log: " << endl;
+    tensor_3d_log.print();
+    cout << endl;
+
+    auto start = high_resolution_clock::now();
+
+    // Tensor<> really_large_tensor = Tensor<>({100, 100, 100}, 1.0f);
+
+    // for (size_t i = 0; i < 100; i++) {
+    //     cout << "iteration: " << i << endl;
+    //     // really_large_tensor = really_large_tensor.map([](float x) { return exp(x); });
+    //     Tensor<> really_large_tensor_transpose = really_large_tensor.transpose();
+    //     size_t num_elements = really_large_tensor.size();
+    // }
+
+    // auto stop = high_resolution_clock::now();
+    // auto duration = duration_cast<microseconds>(stop - start);
+
+    // cout << "Time required : " << duration.count() << endl;
+
+    Tensor<> permuted_tensor_3d = tensor_3d.permute(1, 0, 2);
+
+    cout << "permuted_tensor_3d: " << endl;
+    permuted_tensor_3d.print();
+    cout << endl;
+
+    Tensor<> reshaped_permuted_tensor_3d = permuted_tensor_3d.reshape({3, 6});
+
+    cout << "reshaped permuted_tensor_3d: " << endl;
+    reshaped_permuted_tensor_3d.print();
+    cout << endl;
+
+    Tensor<> flattened_reshaped_permuted_tensor_3d = reshaped_permuted_tensor_3d.flatten();
+
+    cout << "flattened_reshaped_permuted_tensor_3d: " << endl;
+    flattened_reshaped_permuted_tensor_3d.print();
+    cout << endl;
+
 
     return 0;
 }

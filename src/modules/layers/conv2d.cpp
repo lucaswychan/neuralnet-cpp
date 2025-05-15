@@ -93,6 +93,9 @@ Tensor<> Conv2d::forward(const Tensor<> &input)
 
 Tensor<> Conv2d::backward(const Tensor<> &grad_output)
 {
+    /*
+    
+    */
     // dL_dY = grad_output
 
     // dL_dW = conv(input_data, dL_dY)
@@ -140,8 +143,7 @@ Tensor<> Conv2d::backward(const Tensor<> &grad_output)
     flipped_weight.print();
     cout << endl;
 
-    
-    Tensor<> permuted_flipped_weight = flipped_weight.permute(1, 0, 2, 3);
+        Tensor<> permuted_flipped_weight = flipped_weight.permute(1, 0, 2, 3);
 
     cout << "permuted_flipped_weight: " << endl;
     permuted_flipped_weight.print();
@@ -204,12 +206,12 @@ void Conv2d::reset_parameters()
     size_t n = this->in_channels_;
     n *= this->kernel_size_.first * this->kernel_size_.second;
 
-    const double stdv = 1.0 / sqrt(n);
+    const float stdv = 1.0 / sqrt(n);
 
     // Set up the random number generator
     random_device rd;
     mt19937 gen(rd());
-    uniform_real_distribution<double> dis(-stdv, stdv);
+    uniform_real_distribution<float> dis(-stdv, stdv);
 
     for (size_t i = 0; i < this->out_channels_; i++)
     {

@@ -51,10 +51,6 @@ Tensor<> Linear::backward(const Tensor<> &grad_output)
     // dL/dW = X^T * dL/dY
     this->grad_weight_ = this->input_cache_.transpose().matmul(grad_output);
 
-    // cout << endl << "dL/dW: " << endl;
-    // this->grad_weight_.print();
-    // cout << endl;
-
     // dL/dX = dL/dY * W^T
     Tensor<> grad_input = grad_output.matmul(this->weight_.transpose());
 
@@ -64,10 +60,6 @@ Tensor<> Linear::backward(const Tensor<> &grad_output)
     */
     if (this->use_bias_)
         this->grad_bias_ = grad_output.transpose().matmul(Tensor<>({grad_output.shapes()[0], 1}, 1.0f));
-
-    // cout << endl << "dL/db: " << endl;
-    // this->grad_bias_.print();
-    // cout << endl;
 
     return grad_input;
 }
@@ -93,12 +85,12 @@ void Linear::reset_parameters()
 
     */
     // Calculate the limit for the uniform distribution
-    const double stdv = 1.0 / sqrt(this->weight_.shapes()[0]); // since the weight is transposed
+    const float stdv = 1.0 / sqrt(this->weight_.shapes()[0]); // since the weight is transposed
 
     // Set up the random number generator
     random_device rd;
     mt19937 gen(rd());
-    uniform_real_distribution<double> dis(-stdv, stdv);
+    uniform_real_distribution<float> dis(-stdv, stdv);
 
     // Xavier initialization
     for (size_t i = 0; i < this->in_features_; i++)

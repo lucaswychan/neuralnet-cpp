@@ -196,7 +196,7 @@ Tensor<> flip_vertical_and_horizontal(const Tensor<> &input)
     const size_t H = input.shapes()[2];
     const size_t W = input.shapes()[3];
 
-    double cache;
+    float cache;
 
     for (size_t b = 0; b < B; ++b)
     {

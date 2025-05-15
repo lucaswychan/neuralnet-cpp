@@ -1,6 +1,6 @@
 #include "accuracy.hpp"
 
-double metrics::accuracy(const Tensor<>& output, const Tensor<>& target) {
+float metrics::accuracy(const Tensor<>& output, const Tensor<>& target) {
     Tensor<size_t> output_argmax = output.argmax();
 
     Tensor<size_t> target_argmax;
@@ -18,5 +18,5 @@ double metrics::accuracy(const Tensor<>& output, const Tensor<>& target) {
 
     Tensor<int> result = output_argmax.equal(target_argmax);
 
-    return (double)result.sum() / (double)result.shapes()[0];
+    return (float)result.sum() / (float)result.shapes()[0];
 }

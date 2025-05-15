@@ -26,7 +26,7 @@ You can create your tensor from C++ array, or using `vector` in C++ STL. You can
 ```cpp
 #include "tensor.hpp"
 
-// default type is double
+// default type is float
 Tensor<> your_tensor = { { 1.2, 2.3, 3.4 }, { 4.5, 5.6, 6.7 } }; // shape: (2, 3)
 
 // Or you can create a tensor with a specific type
@@ -36,7 +36,7 @@ Tensor<int> your_int_tensor = { { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } } // shape
 Tensor<> transposed_tensor = your_tensor.transpose(); // shape: (3, 2)
 
 // You can also create a tensor from a vector
-vector<vector<double>> your_vec = { { 1.2, 2.3, 3.4 }, { 4.5, 5.6, 6.7 } };
+vector<vector<float>> your_vec = { { 1.2, 2.3, 3.4 }, { 4.5, 5.6, 6.7 } };
 Tensor<> your_tensor_from_vec = Tensor<>(your_vec);
 ```
 
@@ -172,7 +172,7 @@ Tensor<int> A = { { 1, 2, 3 },
 
 Tensor<float> A_float = A.dtype<float>();
 
-Tensor<> A_double = A.dtype<double>(); // since the default type of tensor is double
+Tensor<> A_float = A.dtype<float>(); // since the default type of tensor is float
 ```
 
 ## Filter the unwanted elements
@@ -200,7 +200,7 @@ Function mapping also can be applied to the tensor, simply by using `map`. It ta
 Tensor<> A = { { 1, 2, 3 },
                { 4, 5, 6 } }; // 2 x 3
 
-Tensor<> A_mapped = A.map([](double x) { return exp(x); });
+Tensor<> A_mapped = A.map([](float x) { return exp(x); });
 /*
 { { 2.71828, 7.38906, 20.0855 },
   { 54.5982, 148.413, 403.429 } }
@@ -245,12 +245,35 @@ Tensor<size_t> tensor_1d_argmax = tensor_1d.argmin();
 
 ## Flatten tensor
 
-You can flatten your tensor using `flatten` function. It returns a 1-D tensor.
+You can flatten your tensor using `flatten` function. It flattens the dimensions of the tensor from start_dim to end_dim into a single dimension. Default of start_dim and end_dim is 0 and -1 respectively.
 
 ```cpp
 Tensor<int> A = { { 1, 2, 3 },
                   { 4, 5, 6 } }; // 2 x 3
 
 Tensor<int> A_flatten = A.flatten();
-// { 1, 2, 3, 4, 5, 6 }
+// [ 1, 2, 3, 4, 5, 6 ]
+
+Tensor<> B_3d = { { { -1, -2, -3 },
+                    {-4, -5, -6 } }, 
+                  { { 1, 2, 3 },
+                    { 4, 5, 6 } } }; // 2 x 2 x 3
+
+Tensor<> B_flatten_12 = B_3d.flatten(0, 1) // flatten the first and second dimension
+/* 
+[
+  [-1, -2, -3],
+  [-4, -5, -6],
+  [1, 2, 3],
+  [4, 5, 6]
+]
+*/
+
+Tensor<> B_flatten_23 = B_3d.flatten(1, 2) // flatten the second and the third (last) dimension
+/*
+[
+  [-1, -2, -3, -4, -5, -6],
+  [1, 2, 3, 4, 5, 6]
+]
+*/
 ```

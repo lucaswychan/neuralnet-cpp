@@ -11,10 +11,10 @@ int main()
 
     // Define the hyperparameters
 
-    const double LR = 0.01;
-    const double EPOCH = 10;
-    const double BATCH_SIZE = 64;
-    const double DROPOUT_P = 0.3;
+    const float LR = 0.01;
+    const float EPOCH = 10;
+    const float BATCH_SIZE = 64;
+    const float DROPOUT_P = 0.3;
 
     MNIST dataset(BATCH_SIZE);
 
@@ -29,7 +29,8 @@ int main()
     }
 
     // Initialize the model
-    MLP model = MLP({784, 128, 64, 10}, DROPOUT_P);
+    bool bias = true;
+    MLP model = MLP(784, {128, 64, 10}, bias, DROPOUT_P);
 
     cout << "Finished model initialization" << endl;
 
@@ -38,14 +39,15 @@ int main()
 
     cout << "Finished loss initialization" << endl;
 
-    double loss = 0.0;
-    double acc = 0.0;
-    vector<double> loss_list;
-    vector<double> accuracy_list;
+    float loss = 0.0;
+    float acc = 0.0;
+    vector<float> loss_list;
+    vector<float> accuracy_list;
 
     cout << "Training started..." << endl;
 
-    // // Train the model
+    // ============================ Training ====================================
+
     // Example of iterating through all batches
     for (size_t e = 0; e < EPOCH; e++)
     {
@@ -77,8 +79,8 @@ int main()
             print_stats_line(i, loss, acc);
         }
 
-        double total_loss = accumulate(loss_list.begin(), loss_list.end(), 0.0) / loss_list.size();
-        double total_acc = accumulate(accuracy_list.begin(), accuracy_list.end(), 0.0) / accuracy_list.size() * 100;
+        float total_loss = accumulate(loss_list.begin(), loss_list.end(), 0.0) / loss_list.size();
+        float total_acc = accumulate(accuracy_list.begin(), accuracy_list.end(), 0.0) / accuracy_list.size() * 100;
 
         cout << "------------------------------------" << endl;
         cout << "Total Loss in Epoch " << e + 1 << " = " << total_loss << "" << endl;
@@ -86,7 +88,7 @@ int main()
         cout << "------------------------------------" << endl;
     }
 
-    // Inference
+    // ============================ Inference ====================================
 
     model.eval();
 
@@ -127,8 +129,11 @@ int main()
         print_stats_line(i, loss, acc);
     }
 
-    double total_loss = accumulate(loss_list.begin(), loss_list.end(), 0.0) / loss_list.size();
-    double total_acc = accumulate(accuracy_list.begin(), accuracy_list.end(), 0.0) / accuracy_list.size() * 100;
+    float total_loss = accumulate(loss_list.begin(), loss_list.end(), 0.0) / loss_list.size();
+    float total_acc = accumulate(accuracy_list.begin(), accuracy_list.end(), 0.0) / accuracy_list.size() * 100;
+
+    cout << "Average Loss on Test Data = " << total_loss << "" << endl;
+    cout << "Average Accuracy on Test Data = " << total_acc << "%" << endl;
 
     cout << "------------------------------------" << endl;
 

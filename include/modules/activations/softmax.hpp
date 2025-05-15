@@ -8,7 +8,7 @@ class Softmax : public Module {
 
         // Helper function to deal with multiple dimensions
         Tensor<> softmax_helper(const Tensor<>& input);
-        vector<double> softmax_helper(const vector<double>& input);
+        vector<float> softmax_helper(const vector<float>& input);
     public:
         Softmax();
         Tensor<> forward(const Tensor<>& input);

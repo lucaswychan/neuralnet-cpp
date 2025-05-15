@@ -49,8 +49,8 @@ T MNIST::reverse_int(T value) {
     return result;
 }
 
-double MNIST::normalize(double value) {
-    double scaled = value / 255.0f;
+float MNIST::normalize(float value) {
+    float scaled = value / 255.0f;
     return (scaled - this->MNIST_MEAN) / this->MNIST_STD;
 }
 
@@ -73,13 +73,13 @@ bool MNIST::read_images(const string& path) {
     numRows = reverse_int(numRows);
     numCols = reverse_int(numCols);
 
-    this->images.resize(numImages, vector<double>(numRows * numCols));
+    this->images.resize(numImages, vector<float>(numRows * numCols));
 
     for(int i = 0; i < numImages; i++) {
         for(int j = 0; j < numRows * numCols; j++) {
             unsigned char temp = 0;
             file.read(reinterpret_cast<char*>(&temp), sizeof(temp));
-            this->images[i][j] = normalize(static_cast<double>(temp));
+            this->images[i][j] = normalize(static_cast<float>(temp));
         }
     }
 
