@@ -20,6 +20,7 @@ endif()
 include_directories(
     include/
     include/core
+    include/modules/containers
     include/modules/layers
     include/modules/activations
     include/modules/losses
@@ -34,6 +35,7 @@ set(SOURCE_FILES
     src/core/tensor.cpp
     src/utils/tensor_utils.cpp
     src/core/module.cpp
+    src/modules/containers/sequential.cpp
     src/modules/layers/linear.cpp
     src/modules/layers/conv2d.cpp
     src/modules/layers/flatten.cpp
@@ -54,7 +56,7 @@ set(SOURCE_FILES
 add_library(neuralnet ${SOURCE_FILES})
 
 # Add the executable for the main example
-add_executable(main examples/test_conv2d.cpp)
+add_executable(main examples/main.cpp)
 target_link_libraries(main neuralnet)
 
 # Only build tests if BUILD_TESTS is ON
