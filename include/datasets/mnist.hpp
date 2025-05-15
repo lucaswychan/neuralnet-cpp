@@ -10,7 +10,7 @@
 using namespace std;
 
 struct Batch {
-    vector<vector<double>> batch_data;
+    vector<vector<float>> batch_data;
     vector<int> batch_labels;
 
     tuple<Tensor<>, Tensor<>> to_tensor();
@@ -18,11 +18,11 @@ struct Batch {
 
 class MNIST {
 private:
-    const double MNIST_MEAN = 0.1307f;
-    const double MNIST_STD = 0.3081f;
+    const float MNIST_MEAN = 0.1307f;
+    const float MNIST_STD = 0.3081f;
     const int MNIST_NUM_LABELS = 10;
 
-    vector<vector<double>> images;
+    vector<vector<float>> images;
     vector<int> labels;
 
     size_t current_batch_idxs = 0;
@@ -33,7 +33,7 @@ private:
 
     template<typename T>
     T reverse_int(T value);
-    double normalize(double value);
+    float normalize(float value);
 
     bool read_images(const string& path);
     bool read_labels(const string& path);

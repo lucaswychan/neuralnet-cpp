@@ -7,7 +7,7 @@ namespace nn {
 class CrossEntropyLoss : public Loss {
     public:
         CrossEntropyLoss();
-        virtual double forward(const Tensor<>& Y_hat, const Tensor<>& Y) override;
+        virtual float forward(const Tensor<>& Y_hat, const Tensor<>& Y) override;
         virtual Tensor<> backward() override;
 
     private:

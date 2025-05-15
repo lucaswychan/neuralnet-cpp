@@ -2,5 +2,5 @@
 #include "tensor.hpp"
 
 namespace metrics {
-    double accuracy(const Tensor<>& output, const Tensor<>& target);
+    float accuracy(const Tensor<>& output, const Tensor<>& target);
 }

@@ -9,7 +9,7 @@ CrossEntropyLoss::CrossEntropyLoss()
     cout << "CrossEntropyLoss initialized" << endl;
 }
 
-double CrossEntropyLoss::forward(const Tensor<> &Y_hat, const Tensor<> &Y)
+float CrossEntropyLoss::forward(const Tensor<> &Y_hat, const Tensor<> &Y)
 {
     /*
     L = 1 / B \sum_{i=1}^B \sum_{j=1}^M Y_{ij} * log(softmax(Y_hat_{ij}))
@@ -24,7 +24,7 @@ double CrossEntropyLoss::forward(const Tensor<> &Y_hat, const Tensor<> &Y)
     if (Y.ndim() == 2)
     {
         // In this case, we assume Y is a matrix of one-hot vectors. So we can just store the index of the correct label
-        this->Y_cache_ = Y.argmax().dtype<double>();
+        this->Y_cache_ = Y.argmax().dtype<float>();
     }
     else if (Y.ndim() == 1)
     {
@@ -37,14 +37,14 @@ double CrossEntropyLoss::forward(const Tensor<> &Y_hat, const Tensor<> &Y)
 
     // B = batch size
     const size_t B = this->Y_cache_.shapes()[0];
-    const double factor = -1.0f / B;
+    const float factor = -1.0f / B;
 
     // apply softmax to model output
     Tensor<> softmax_Y_hat = this->softmax_(Y_hat);
     this->softmax_Y_hat_cache_ = softmax_Y_hat;
 
     // sum up all the elements
-    double loss_without_factor = 0.0f;
+    float loss_without_factor = 0.0f;
 
     for (int i = 0; i < B; ++i)
     {

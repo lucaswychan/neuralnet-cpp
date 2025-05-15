@@ -32,3 +32,24 @@ const vector<size_t> calculate_output_shape(const vector<size_t> &input_shape, c
 Tensor<> flip_vertical_and_horizontal(const Tensor<> &input);
 
 Tensor<> dilate_input(const Tensor<> &input, const size_tp2 &dilation);
+
+// // Helper lambda to process variant parameters
+// template <typename U>
+// size_tp2 process_variant(U &&arg)
+// {
+//     using T = std::decay_t<U>;
+
+//     if constexpr (std::is_same_v<T, size_t>)
+//     {
+//         if (arg < 0)
+//         {
+//             throw std::invalid_argument("Negative kernel size, stride, padding, or dilation is not supported");
+//         }
+//         return {arg, arg};
+//     }
+//     else
+//     {
+//         static_assert(std::is_same_v<T, size_tp2>, "Unexpected type in variant");
+//         return arg;
+//     }
+// }

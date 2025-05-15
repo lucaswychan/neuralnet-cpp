@@ -32,7 +32,7 @@ int main()
     Tensor<> test_weight = Tensor<>({out_channels, in_channels, weight_size, weight_size}, 0.0f);
     Tensor<> test_bias = Tensor<>({out_channels}, 0.0f);
 
-    double val = 0.01;
+    float val = 0.01;
     for (size_t i = 0; i < out_channels; i++)
     {
         for (size_t j = 0; j < in_channels; j++)
@@ -209,7 +209,7 @@ int main()
 
     output_3 /= 1e6;
 
-    double loss = cross_entropy(output_3, labels);
+    float loss = cross_entropy(output_3, labels);
 
     cout << "Loss: " << loss << endl;
 

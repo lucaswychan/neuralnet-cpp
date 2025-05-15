@@ -94,7 +94,7 @@ TEST_CASE("TensorTest - 3D Tensor Constructor from initializer_list")
 
 TEST_CASE("TensorTest - 1D Tensor Constructor from vector")
 {
-    vector<double> data = {1.0f, 2.0f, 3.0f, 4.0f};
+    vector<float> data = {1.0f, 2.0f, 3.0f, 4.0f};
     Tensor<> tensor1 = data;
     CHECK(tensor1.ndim() == 1);
     CHECK(tensor1.size() == 4);
@@ -104,7 +104,7 @@ TEST_CASE("TensorTest - 1D Tensor Constructor from vector")
     CHECK(tensor1[2] == 3.0f);
     CHECK(tensor1[3] == 4.0f);
 
-    vector<double> data2 = {0};
+    vector<float> data2 = {0};
     Tensor<> tensor2 = data2;
     CHECK(tensor2.shapes()[0] == 1);
     CHECK(tensor2.ndim() == 1);
@@ -114,7 +114,7 @@ TEST_CASE("TensorTest - 1D Tensor Constructor from vector")
 
 TEST_CASE("TensorTest - 2D Tensor Constructor from vector")
 {
-    vector<vector<double>> data = {{1.0f, 2.0f}, {3.0f, 4.0f}};
+    vector<vector<float>> data = {{1.0f, 2.0f}, {3.0f, 4.0f}};
     Tensor<> tensor = data;
     CHECK(tensor.ndim() == 2);
     CHECK(tensor.size() == 4);
@@ -125,7 +125,7 @@ TEST_CASE("TensorTest - 2D Tensor Constructor from vector")
     CHECK(tensor[1, 0] == 3.0f);
     CHECK(tensor[1, 1] == 4.0f);
 
-    vector<vector<double>> data2 = {{0.0f, 0.0f}};
+    vector<vector<float>> data2 = {{0.0f, 0.0f}};
     Tensor<> tensor2 = data2;
     CHECK(tensor2.ndim() == 2);
     CHECK(tensor2.size() == 2);
@@ -137,7 +137,7 @@ TEST_CASE("TensorTest - 2D Tensor Constructor from vector")
 
 TEST_CASE("TensorTest - 3D Tensor Constructor from vector")
 {
-    vector<vector<vector<double>>> data = {{{1.0f, 2.0f}, {3.0f, 4.0f}}, {{5.0f, 6.0f}, {7.0f, 8.0f}}};
+    vector<vector<vector<float>>> data = {{{1.0f, 2.0f}, {3.0f, 4.0f}}, {{5.0f, 6.0f}, {7.0f, 8.0f}}};
     Tensor<> tensor = data;
     CHECK(tensor.ndim() == 3);
     CHECK(tensor.size() == 8);
@@ -150,7 +150,7 @@ TEST_CASE("TensorTest - 3D Tensor Constructor from vector")
     CHECK(tensor[0, 1, 1] == 4.0f);
     CHECK(tensor[1, 1, 1] == 8.0f);
 
-    vector<vector<vector<double>>> data2 = {{{0.0f, 0.0f}, {0.0f, 0.0f}}, {{0.0f, 0.0f}, {0.0f, 0.0f}}};
+    vector<vector<vector<float>>> data2 = {{{0.0f, 0.0f}, {0.0f, 0.0f}}, {{0.0f, 0.0f}, {0.0f, 0.0f}}};
     Tensor<> tensor2 = data2;
     CHECK(tensor2.ndim() == 3);
     CHECK(tensor2.size() == 8);
@@ -166,7 +166,7 @@ TEST_CASE("TensorTest - 3D Tensor Constructor from vector")
 
 TEST_CASE("TensorTest - 4D Tensor Constructor from vector")
 {
-    vector<vector<vector<vector<double>>>> data = {{{{1.0f, 2.0f}, {3.0f, 4.0f}}, {{5.0f, 6.0f}, {7.0f, 8.0f}}}, {{{9.0f, 10.0f}, {11.0f, 12.0f}}, {{13.0f, 14.0f}, {15.0f, 16.0f}}}};
+    vector<vector<vector<vector<float>>>> data = {{{{1.0f, 2.0f}, {3.0f, 4.0f}}, {{5.0f, 6.0f}, {7.0f, 8.0f}}}, {{{9.0f, 10.0f}, {11.0f, 12.0f}}, {{13.0f, 14.0f}, {15.0f, 16.0f}}}};
     Tensor<> tensor = data;
     CHECK(tensor.ndim() == 4);
     CHECK(tensor.size() == 16);
@@ -493,22 +493,22 @@ TEST_CASE("TensorTest - abs")
 TEST_CASE("TensorTest - sum")
 {
     Tensor<> tensor_1d = {1.0f, 2.0f, 3.0f, 4.0f};
-    double sum_1d = tensor_1d.sum();
+    float sum_1d = tensor_1d.sum();
     CHECK(sum_1d == 10.0f);
 
     Tensor<> tensor_2d = {{1.0f, 2.0f}, {3.0f, 4.0f}};
-    double sum_2d = tensor_2d.sum();
+    float sum_2d = tensor_2d.sum();
     CHECK(sum_2d == 10.0f);
 
     Tensor<> tensor_3d = {{{1.0f, 2.0f}, {3.0f, 4.0f}}, {{5.0f, 6.0f}, {7.0f, 8.0f}}};
-    double sum_3d = tensor_3d.sum();
+    float sum_3d = tensor_3d.sum();
     CHECK(sum_3d == 36.0f);
 }
 
 TEST_CASE("TensorTest - filter")
 {
     Tensor<> tensor_1d = {1.0f, 2.0f, 3.0f, 4.0f};
-    Tensor<> filtered_tensor_1d = tensor_1d.filter([](double x)
+    Tensor<> filtered_tensor_1d = tensor_1d.filter([](float x)
                                                    { return x < 3.0f; });
     CHECK(filtered_tensor_1d.ndim() == 1);
     CHECK(filtered_tensor_1d.size() == 4);
@@ -519,7 +519,7 @@ TEST_CASE("TensorTest - filter")
     CHECK(filtered_tensor_1d[3] == 0.0f);
 
     Tensor<> tensor_2d = {{1.0f, 2.0f}, {3.0f, 4.0f}};
-    Tensor<> filtered_tensor_2d = tensor_2d.filter([](double x)
+    Tensor<> filtered_tensor_2d = tensor_2d.filter([](float x)
                                                    { return x < 3.0f; });
     CHECK(filtered_tensor_2d.ndim() == 2);
     CHECK(filtered_tensor_2d.size() == 4);
@@ -531,7 +531,7 @@ TEST_CASE("TensorTest - filter")
     CHECK(filtered_tensor_2d[1, 1] == 0.0f);
 
     Tensor<> tensor_3d = {{{1.0f, 2.0f}, {3.0f, 4.0f}}, {{5.0f, 6.0f}, {7.0f, 8.0f}}};
-    Tensor<> filtered_tensor_3d = tensor_3d.filter([](double x)
+    Tensor<> filtered_tensor_3d = tensor_3d.filter([](float x)
                                                    { return x < 3.0f; });
     CHECK(filtered_tensor_3d.ndim() == 3);
     CHECK(filtered_tensor_3d.size() == 8);
@@ -550,10 +550,10 @@ TEST_CASE("TensorTest - filter")
 
 TEST_CASE("TensorTest - map")
 {
-    double eps = 1e-5f;
+    float eps = 1e-5f;
 
     Tensor<> tensor_1d = {1.0f, 2.0f, 3.0f, 4.0f};
-    Tensor<> tensor_1d_exp = tensor_1d.map([](double x)
+    Tensor<> tensor_1d_exp = tensor_1d.map([](float x)
                                            { return exp(x); });
     CHECK(tensor_1d_exp.ndim() == 1);
     CHECK(tensor_1d_exp.size() == 4);
@@ -564,7 +564,7 @@ TEST_CASE("TensorTest - map")
     CHECK(tensor_1d_exp[3] - exp(4.0f) < eps);
 
     Tensor<> tensor_2d = {{1.0f, 2.0f}, {3.0f, 4.0f}};
-    Tensor<> tensor_2d_times_10 = tensor_2d.map([](double x)
+    Tensor<> tensor_2d_times_10 = tensor_2d.map([](float x)
                                                 { return x * 10.0f; });
     CHECK(tensor_2d_times_10.ndim() == 2);
     CHECK(tensor_2d_times_10.size() == 4);
@@ -576,7 +576,7 @@ TEST_CASE("TensorTest - map")
     CHECK(tensor_2d_times_10[1, 1] == 40.0f);
 
     Tensor<> tensor_3d = {{{1.0f, 2.0f}, {3.0f, 4.0f}}, {{5.0f, 6.0f}, {7.0f, 8.0f}}};
-    Tensor<> tensor_3d_log = tensor_3d.map([](double x)
+    Tensor<> tensor_3d_log = tensor_3d.map([](float x)
                                            { return log(x); });
     CHECK(tensor_3d_log.ndim() == 3);
     CHECK(tensor_3d_log.size() == 8);

@@ -10,17 +10,17 @@ Softmax::Softmax()
 
 Tensor<> Softmax::softmax_helper(const Tensor<> &input)
 {
-    Tensor<> result = input.map([](double x)
+    Tensor<> result = input.map([](float x)
                                 { return exp(x); });
-    double sum = result.sum();
+    float sum = result.sum();
 
     return result / sum;
 }
 
-vector<double> Softmax::softmax_helper(const vector<double> &input)
+vector<float> Softmax::softmax_helper(const vector<float> &input)
 {
-    double sum = 0.0f;
-    vector<double> result;
+    float sum = 0.0f;
+    vector<float> result;
 
     for (size_t i = 0; i < input.size(); i++)
     {
@@ -52,11 +52,11 @@ Tensor<> Softmax::forward(const Tensor<> &input)
     // const size_t n = input.shapes()[leading_ndim];
     // const size_t m = input.shapes()[leading_ndim + 1];
 
-    vector<vector<double>> softmax_input;
+    vector<vector<float>> softmax_input;
 
     for (size_t i = 0; i < input.shapes()[0]; i++)
     {
-        vector<double> input_row;
+        vector<float> input_row;
         input_row.reserve(input.shapes()[1]);
 
         for (size_t j = 0; j < input.shapes()[1]; j++)

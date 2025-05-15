@@ -17,9 +17,3 @@ Tensor<> Flatten::backward(const Tensor<> &grad_output)
 {
     return grad_output.reshape(this->original_input_shape_);
 }
-
-void Flatten::update_params(const float lr)
-{
-    //  we don't need to update any parameters
-    return;
-}

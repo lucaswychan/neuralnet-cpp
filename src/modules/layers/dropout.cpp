@@ -1,7 +1,7 @@
 #include "dropout.hpp"
 using namespace nn;
 
-Dropout::Dropout(double p) {
+Dropout::Dropout(float p) {
     if (p < 0 || p > 1) {
         throw runtime_error("Dropout probability must be between 0 and 1");
     }
