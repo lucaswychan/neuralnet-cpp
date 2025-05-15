@@ -3,61 +3,50 @@
 #include "relu.hpp"
 #include "dropout.hpp"
 
-MLP::MLP(vector<size_t> layer_sizes, double dropout_p)
+MLP::MLP(size_t in_channels, initializer_list<size_t> hidden_channels, bool bias, float dropout)
 {
-    this->num_layers_ = layer_sizes.size();
-
-    for (size_t i = 0; i < this->num_layers_ - 1; i++)
+    vector<Module *> layers;
+    size_t i = 0;
+    for (size_t hidden_channel : hidden_channels)
     {
-        this->layers_.push_back(new Linear(layer_sizes[i], layer_sizes[i + 1], true));
-        if (i < this->num_layers_ - 2)
+        layers.push_back(new Linear(in_channels, hidden_channel, bias));
+        in_channels = hidden_channel; // update the input channels for the next layer
+
+        if (i < hidden_channels.size() - 1)
         {
-            this->layers_.push_back(new ReLU());
-            this->layers_.push_back(new Dropout(dropout_p));
+            layers.push_back(new ReLU());
+            if (dropout > 0.0f) {
+                layers.push_back(new Dropout(dropout));
+            }
         }
+        i++;
     }
-}
 
-MLP::MLP(initializer_list<size_t> layer_sizes, double dropout_p) : MLP(vector<size_t>(layer_sizes), dropout_p) {}
-
-MLP::~MLP()
-{
-    for (Module *layer : this->layers_)
-    {
-        delete layer;
-    }
+    // Move the vector directly to the Sequential constructor
+    this->layers_ = Sequential(std::move(layers));
 }
 
 Tensor<> MLP::forward(const Tensor<> &input)
 {
-    Tensor<> x = input;
-
-    for (Module *layer : this->layers_)
-    {
-        x = layer->forward(x);
-    }
-
-    return x;
+    return this->layers_.forward(input);
 }
 
 Tensor<> MLP::backward(const Tensor<> &grad_output)
 {
-    Tensor<> grad = grad_output;
-
-    for (int i = this->layers_.size() - 1; i >= 0; i--)
-    {
-        grad = this->layers_[i]->backward(grad);
-    }
-
-    return grad;
+    return this->layers_.backward(grad_output);
 }
 
 void MLP::update_params(const float lr)
 {
-    for (Module *layer : this->layers_)
-    {
-        layer->update_params(lr);
-    }
+    this->layers_.update_params(lr);
+}
 
-    return;
+Module& MLP::train(const bool mode) {
+    this->layers_.train(mode);
+    return *this;
+}
+
+Module& MLP::eval() {
+    this->layers_.eval();
+    return *this;
 }
