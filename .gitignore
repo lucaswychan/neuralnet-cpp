@@ -1,6 +1,7 @@
 # ignore all exe files
 *.exe
 *.py
+.venv/
 venv/
 __pycache__/
 .DS_Store
