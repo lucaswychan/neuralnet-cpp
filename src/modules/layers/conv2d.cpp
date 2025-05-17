@@ -94,7 +94,7 @@ Tensor<> Conv2d::forward(const Tensor<> &input)
 Tensor<> Conv2d::backward(const Tensor<> &grad_output)
 {
     /*
-    
+
     */
     // dL_dY = grad_output
 
@@ -143,7 +143,7 @@ Tensor<> Conv2d::backward(const Tensor<> &grad_output)
     flipped_weight.print();
     cout << endl;
 
-        Tensor<> permuted_flipped_weight = flipped_weight.permute(1, 0, 2, 3);
+    Tensor<> permuted_flipped_weight = flipped_weight.permute(1, 0, 2, 3);
 
     cout << "permuted_flipped_weight: " << endl;
     permuted_flipped_weight.print();
@@ -175,18 +175,6 @@ Tensor<> Conv2d::backward(const Tensor<> &grad_output)
     Tensor<> grad_input = convolution({1, 1}, this->dilation_, this->original_input_shape_, copy_grad_output, permuted_flipped_weight, Tensor<>(), false);
 
     return grad_input;
-}
-
-void Conv2d::update_params(const float lr)
-{
-    this->weight_ -= this->grad_weight_ * lr;
-
-    if (this->use_bias_)
-    {
-        this->bias_ -= this->grad_bias_ * lr;
-    }
-
-    return;
 }
 
 void Conv2d::reset_parameters()
@@ -233,5 +221,26 @@ void Conv2d::reset_parameters()
         {
             this->bias_[i] = dis(gen);
         }
+    }
+}
+
+// Get parameters for optimization
+void Conv2d::register_parameters(
+    unordered_map<string, Tensor<> *> &params,
+    unordered_map<string, Tensor<> *> &grads,
+    const string &prefix) const
+{
+
+    // Register weights
+    std::string weight_name = prefix.empty() ? "conv2d.weight" : prefix + ".conv2d.weight";
+    params[weight_name] = const_cast<Tensor<> *>(&this->weight_);
+    grads[weight_name] = const_cast<Tensor<> *>(&this->grad_weight_);
+
+    // Register bias if used
+    if (this->use_bias_)
+    {
+        std::string bias_name = prefix.empty() ? "conv2d.bias" : prefix + ".conv2d.bias";
+        params[bias_name] = const_cast<Tensor<> *>(&this->bias_);
+        grads[bias_name] = const_cast<Tensor<> *>(&this->grad_bias_);
     }
 }
