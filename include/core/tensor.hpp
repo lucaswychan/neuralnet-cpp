@@ -67,6 +67,10 @@ private:
     {
         // Convert variadic arguments to vector
         vector<int64_t> idxs({static_cast<int64_t>(indices)...});
+        if (idxs.size() != this->ndim())
+        {
+            throw std::invalid_argument("Number of indices does not match the number of dimensions");
+        }
         vector<size_t> normalized_idxs;
 
         // for better performance, reserve the size of the vector
@@ -205,6 +209,30 @@ private:
         return result;
     }
 
+    Tensor<T> arithmetic_operation_with_scaler_impl(ArithmeticOp op, const T &scaler) const
+    {
+        Tensor<T> result = *this;
+
+        for (size_t i = 0; i < this->size(); i++)
+        {
+            switch (op)
+            {
+            case ArithmeticOp::ADD:
+                (*result.data_)[i] += scaler;
+                break;
+            case ArithmeticOp::SUB:
+                (*result.data_)[i] -= scaler;
+                break;
+            case ArithmeticOp::MUL:
+                (*result.data_)[i] *= scaler;
+                break;
+            case ArithmeticOp::DIV:
+                (*result.data_)[i] /= scaler;
+                break;
+            }
+        }
+        return result;
+    }
     // Helper function to cacluate the stride of the tensor
     void compute_contiguous_strides()
     {
@@ -301,6 +329,10 @@ private:
     friend Tensor<V> dtype_impl(const Tensor<U> &tensor);
 
 public:
+    /*
+    ====================== Constructors ======================
+    */
+
     Tensor() = default;
 
     // Constructor for nested vectors
@@ -426,12 +458,9 @@ public:
         other.size_ = -1;
     }
 
-    // template <typename V>
-    // Tensor(const Tensor<V> &other)
-    // {
-    //     // use dtype function to convert the data type
-    //     *this = other.dtype<>();
-    // }
+    /*
+    ====================== Arithmetic operations ======================
+    */
 
     // Add two tensors with same shape, element-wise
     inline Tensor<T> add(const Tensor &other) const
@@ -457,28 +486,28 @@ public:
         return arithmetic_operation_impl(ArithmeticOp::DIV, other);
     }
 
-    // Multiply all elements of tensor with the given scaler
-    Tensor<T> mul(const T &scaler) const
+    // Add all elements of tensor with the given scaler
+    inline Tensor<T> add(const T &scaler) const
     {
-        Tensor<T> result = *this;
+        return arithmetic_operation_with_scaler_impl(ArithmeticOp::ADD, scaler);
+    }
 
-        for (size_t i = 0; i < this->size(); i++)
-        {
-            (*result.data_)[i] *= scaler;
-        }
-        return result;
+    // Subtract all elements of tensor with the given scaler
+    inline Tensor<T> sub(const T &scaler) const
+    {
+        return arithmetic_operation_with_scaler_impl(ArithmeticOp::SUB, scaler);
+    }
+
+    // Multiply all elements of tensor with the given scaler
+    inline Tensor<T> mul(const T &scaler) const
+    {
+        return arithmetic_operation_with_scaler_impl(ArithmeticOp::MUL, scaler);
     }
 
     // Divide all elements of tensor with the given scaler
-    Tensor<T> div(const T &scaler) const
+    inline Tensor<T> div(const T &scaler) const
     {
-        Tensor<T> result = *this;
-
-        for (size_t i = 0; i < this->size(); i++)
-        {
-            (*result.data_)[i] /= scaler;
-        }
-        return result;
+        return arithmetic_operation_with_scaler_impl(ArithmeticOp::DIV, scaler);
     }
 
     /**
@@ -885,6 +914,18 @@ public:
         return reduce_impl<size_t>(ReduceOp::ARGMIN);
     }
 
+    /// @brief Calculate the square root of each element in the tensor
+    /// @return a new tensor with the same shape as the original, but with each element replaced by its square root
+    Tensor<> sqrt() const
+    {
+        Tensor<> result = *this;
+        for (size_t i = 0; i < this->size(); i++)
+        {
+            (*result.data_)[i] = std::sqrt((*this->data_)[i]);
+        }
+        return result;
+    }
+
     /// @brief Convert the tensor to a tensor of a different type.
     /// @details If U is not provided, it defaults to float.
     /// @param U the type to convert to
@@ -1026,16 +1067,13 @@ public:
 
     const size_t size() const
     {
-        if (this->offset_ == 0)
-        {
-            return this->data_->size();
-        }
-
+        // Return cached size if available
         if (this->size_ != -1)
         {
             return this->size_;
         }
 
+        // Calculate size based on shape dimensions
         this->size_ = 1;
         for (const size_t &s : this->shape_)
         {
@@ -1054,15 +1092,25 @@ public:
         return;
     }
 
+    /**
+     * @brief Get the shape of the tensor. E.g. for a 2x3x4 tensor, the shape is {2, 3, 4}.
+     * @return The shape of the tensor.
+     */
     inline const vector<size_t> &shapes() const { return this->shape_; }
 
     // ========================================operators overloading========================================
-    inline Tensor<T> operator+(const Tensor<T> &other) const { return this->add(other); }
-    inline Tensor<T> operator-(const Tensor<T> &other) const { return this->sub(other); }
-    inline Tensor<T> operator*(const Tensor<T> &other) const { return this->mul(other); }
-    inline Tensor<T> operator*(const T &scaler) const { return this->mul(scaler); }
-    inline Tensor<T> operator/(const Tensor<T> &other) const { return this->div(other); }
-    inline Tensor<T> operator/(const T &scaler) const { return this->div(scaler); }
+    inline Tensor<T> operator+(const Tensor<T> &other) const { return this->arithmetic_operation_impl(ArithmeticOp::ADD, other); } // tensor operation
+    inline Tensor<T> operator+(const T &scaler) const { return this->arithmetic_operation_with_scaler_impl(ArithmeticOp::ADD, scaler); } // scaler operation
+
+    inline Tensor<T> operator-(const Tensor<T> &other) const { return this->arithmetic_operation_impl(ArithmeticOp::SUB, other); } // tensor operation
+    inline Tensor<T> operator-(const T &scaler) const { return this->arithmetic_operation_with_scaler_impl(ArithmeticOp::SUB, scaler); } // scaler operation
+
+    inline Tensor<T> operator*(const Tensor<T> &other) const { return this->arithmetic_operation_impl(ArithmeticOp::MUL, other); } // tensor operation
+    inline Tensor<T> operator*(const T &scaler) const { return this->arithmetic_operation_with_scaler_impl(ArithmeticOp::MUL, scaler); } // scaler operation
+
+    inline Tensor<T> operator/(const Tensor<T> &other) const { return this->arithmetic_operation_impl(ArithmeticOp::DIV, other); } // tensor operation
+    inline Tensor<T> operator/(const T &scaler) const { return this->arithmetic_operation_with_scaler_impl(ArithmeticOp::DIV, scaler); } // scaler operation
+
     inline bool operator==(const Tensor<T> &other) const { return this->compare(other); }
 
     /*
@@ -1087,14 +1135,15 @@ public:
     // move assignment operator
     Tensor<T> &operator=(Tensor<T> &&other) noexcept
     {
-        if (this != &other) {
+        if (this != &other)
+        {
             // Move resources from other to this
             this->data_ = std::move(other.data_);
             this->shape_ = std::move(other.shape_);
             this->strides_ = std::move(other.strides_);
             this->offset_ = other.offset_;
             this->size_ = other.size_;
-            
+
             // Reset other to a valid but empty state
             other.shape_.clear();
             other.strides_.clear();
@@ -1107,37 +1156,37 @@ public:
 
     const Tensor<T> operator+=(const Tensor<T> &other)
     {
-        *this = *this + other;
+        *this = this->arithmetic_operation_impl(ArithmeticOp::ADD, other);
         return *this;
     }
 
     const Tensor<T> operator-=(const Tensor<T> &other)
     {
-        *this = *this - other;
+        *this = this->arithmetic_operation_impl(ArithmeticOp::SUB, other);
         return *this;
     }
 
     const Tensor<T> operator*=(const Tensor<T> &other)
     {
-        *this = *this * other;
+        *this = this->arithmetic_operation_impl(ArithmeticOp::MUL, other);
         return *this;
     }
 
     const Tensor<T> operator*=(const T &other)
     {
-        *this = *this * other;
+        *this = this->arithmetic_operation_with_scaler_impl(ArithmeticOp::MUL, other);
         return *this;
     }
 
     const Tensor<T> operator/=(const Tensor<T> &other)
     {
-        *this = *this / other;
+        *this = this->arithmetic_operation_impl(ArithmeticOp::DIV, other);
         return *this;
     }
 
     const Tensor<T> operator/=(const T &other)
     {
-        *this = *this / other;
+        *this = this->arithmetic_operation_with_scaler_impl(ArithmeticOp::DIV, other);
         return *this;
     }
 
@@ -1149,10 +1198,32 @@ public:
         return (*this->data_)[this->calculate_idx(idxs)];
     }
 
-    // Using vector to index the tensor
+    // Using vector to index the tensor (lvalue)
     T &operator[](const vector<size_t> &indices)
     {
         return (*this->data_)[this->calculate_idx(indices)];
+    }
+
+    /**
+     * @brief Linear indexing accessor (lvalue)
+     *  
+     * This function allows for linear indexing into the tensor.. 
+     * It will directly access the underlying data vector.  
+     * E.g.  
+     * tensor.at(10) = 1.0f; // directly assign the value to the 10th element of the tensor (i.e. this->data_[10])
+     *
+     * @param linear_index The linear index of the element to access.
+     * @return A reference to the element at the given linear index.
+     *
+     * @throw std::out_of_range if the linear index is out of range.
+     */
+    T &at(size_t linear_index)
+    {
+        if (linear_index >= this->size())
+        {
+            throw std::out_of_range("Linear index out of range");
+        }
+        return (*this->data_)[this->offset_ + linear_index];
     }
 
     // rvalue operator overloading
@@ -1163,10 +1234,32 @@ public:
         return (*this->data_)[this->calculate_idx(idxs)];
     }
 
-    // Using vector to index the tensor
+    // Using vector to index the tensor (rvalue)
     const T &operator[](const vector<size_t> &indices) const
     {
         return (*this->data_)[this->calculate_idx(indices)];
+    }
+
+    /**
+     * @brief Linear indexing accessor (rvalue)
+     *
+     * This function allows for linear indexing into the tensor.
+     * It will directly access the underlying data vector.
+     * E.g.
+     * float value = tensor.at(10); // directly assign the value to the 10th element of the tensor (i.e. this->data_[10])
+     *
+     * @param linear_index The linear index of the element to access.
+     * @return A reference to the element at the given linear index.
+     *
+     * @throw std::out_of_range if the linear index is out of range.
+     */
+    const T &at(size_t linear_index) const
+    {
+        if (linear_index >= this->size())
+        {
+            throw std::out_of_range("Linear index out of range");
+        }
+        return (*this->data_)[this->offset_ + linear_index];
     }
 
     /**
