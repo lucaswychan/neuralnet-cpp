@@ -36,11 +36,6 @@ Tensor<> MLP::backward(const Tensor<> &grad_output)
     return this->layers_.backward(grad_output);
 }
 
-void MLP::update_params(const float lr)
-{
-    this->layers_.update_params(lr);
-}
-
 Module& MLP::train(const bool mode) {
     this->layers_.train(mode);
     return *this;
@@ -49,4 +44,13 @@ Module& MLP::train(const bool mode) {
 Module& MLP::eval() {
     this->layers_.eval();
     return *this;
+}
+
+void MLP::register_parameters(
+    std::unordered_map<std::string, Tensor<> *> &params,
+    std::unordered_map<std::string, Tensor<> *> &grads,
+    const std::string &prefix) const
+{
+    // Delegate to sequential container
+    this->layers_.register_parameters(params, grads, prefix.empty() ? "mlp" : prefix);
 }

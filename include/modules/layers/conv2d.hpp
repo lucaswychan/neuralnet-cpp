@@ -20,7 +20,6 @@ namespace nn
 
         virtual Tensor<> forward(const Tensor<> &input) override;
         virtual Tensor<> backward(const Tensor<> &grad_output) override;
-        virtual void update_params(const float lr) override;
 
         void reset_parameters();
 
@@ -31,14 +30,20 @@ namespace nn
         // Getters
         inline const Tensor<> &get_weight() const { return this->weight_; }
         inline const Tensor<> &get_bias() const { return this->bias_; }
+        
+        // Get parameters for optimization
+        virtual void register_parameters(
+            unordered_map<string, Tensor<> *> &params,
+            unordered_map<string, Tensor<> *> &grads,
+            const string &prefix = "") const override;
 
     private:
         size_t in_channels_;
         size_t out_channels_;
-        size_tp2 kernel_size_;
-        size_tp2 stride_;
-        size_tp2 padding_;
-        size_tp2 dilation_;
+        size_tp2 kernel_size_; // they are pair of size_t
+        size_tp2 stride_; // they are pair of size_t
+        size_tp2 padding_; // they are pair of size_t
+        size_tp2 dilation_; // they are pair of size_t
         bool use_bias_;
         PaddingMode padding_mode_;
         Padding padding_module_;

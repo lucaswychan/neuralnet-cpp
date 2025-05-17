@@ -55,13 +55,6 @@ Tensor<> Sequential::backward(const Tensor<>& grad_output) {
     return grad;
 }
 
-// Update parameters
-void Sequential::update_params(const float lr) {
-    for (Module* module : this->modules_) {
-        module->update_params(lr);
-    }
-}
-
 // Add a module
 Sequential& Sequential::add(Module* module) {
     this->modules_.push_back(module);
@@ -97,6 +90,21 @@ Sequential& Sequential::operator=(Sequential&& other) noexcept {
 void Sequential::apply_to_children(const function<void(Module&)>& fn) {
     for (Module* module : this->modules_) {
         fn(*module);
+    }
+}
+
+void Sequential::register_parameters(
+    unordered_map<string, Tensor<> *> &params,
+    unordered_map<string, Tensor<> *> &grads,
+    const string &prefix) const
+{
+
+    for (size_t i = 0; i < this->modules_.size(); ++i)
+    {
+        string module_prefix = prefix.empty() ? "layer" + to_string(i) : prefix + ".layer" + to_string(i);
+        cout << "Getting parameters for " << module_prefix << endl;
+
+        this->modules_[i]->register_parameters(params, grads, module_prefix);
     }
 }
 

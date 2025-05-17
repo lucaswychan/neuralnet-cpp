@@ -11,7 +11,6 @@ public:
 
     virtual Tensor<> forward(const Tensor<> &input) override;
     virtual Tensor<> backward(const Tensor<> &grad_output) override;
-    virtual void update_params(const float lr) override;
 
 protected:
     /**

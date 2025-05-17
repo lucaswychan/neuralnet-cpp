@@ -64,15 +64,6 @@ Tensor<> Linear::backward(const Tensor<> &grad_output)
     return grad_input;
 }
 
-void Linear::update_params(const float lr)
-{
-
-    this->weight_ -= this->grad_weight_ * lr;
-    this->bias_ -= this->grad_bias_ * lr;
-
-    return;
-}
-
 void Linear::reset_parameters()
 {
     /*
@@ -107,5 +98,25 @@ void Linear::reset_parameters()
         {
             this->bias_[i, 0] = dis(gen);
         }
+    }
+}
+
+void Linear::register_parameters(
+    unordered_map<string, Tensor<> *> &params,
+    unordered_map<string, Tensor<> *> &grads,
+    const string &prefix) const
+{
+
+    // Register weights
+    string weight_name = prefix.empty() ? "linear.weight" : prefix + ".linear.weight";
+    params[weight_name] = const_cast<Tensor<> *>(&this->weight_);
+    grads[weight_name] = const_cast<Tensor<> *>(&this->grad_weight_);
+
+    // Register bias if used
+    if (this->use_bias_)
+    {
+        string bias_name = prefix.empty() ? "linear.bias" : prefix + ".linear.bias";
+        params[bias_name] = const_cast<Tensor<> *>(&this->bias_);
+        grads[bias_name] = const_cast<Tensor<> *>(&this->grad_bias_);
     }
 }

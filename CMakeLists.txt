@@ -24,6 +24,7 @@ include_directories(
     include/modules/layers
     include/modules/activations
     include/modules/losses
+    include/modules/optimizers
     include/utils
     include/datasets
     include/models
@@ -35,13 +36,15 @@ set(SOURCE_FILES
     src/core/tensor.cpp
     src/utils/tensor_utils.cpp
     src/core/module.cpp
+    src/core/optimizer.cpp
     src/modules/containers/sequential.cpp
     src/modules/layers/linear.cpp
     src/modules/layers/conv2d.cpp
     src/modules/layers/flatten.cpp
     src/utils/conv2d_utils.cpp
     src/modules/layers/dropout.cpp
-    src/modules/layers/conv2d.cpp
+    src/modules/optimizers/sgd.cpp
+    src/modules/optimizers/adam.cpp
     src/modules/losses/mse.cpp
     src/modules/activations/relu.cpp
     src/modules/activations/softmax.cpp

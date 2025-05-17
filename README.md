@@ -8,18 +8,40 @@ This is a PyTorch-like neural network framework in pure C++ from scratch, using 
 
 Currently supports:
 
--   [Linear layer](include/modules/layers/linear.hpp)
--   [ReLU activation](include/modules/activations/relu.hpp)
--   [Softmax activation](include/modules/activations/softmax.hpp)
--   [Mean Squared Error loss](include/modules/losses/mse.hpp)
--   [Cross Entropy loss](include/modules/losses/cross_entropy.hpp)
+Layers:
+-   [Linear](include/modules/layers/linear.hpp)
+-   [Dropout](include/modules/layers/dropout.hpp)
+-   [Conv2d](include/modules/layers/conv2d.hpp)
+-   [Flatten](include/modules/layers/flatten.hpp)
+-   [MaxPool2d](include/modules/layers/max_pool.hpp)  
+
+Activation:
+-   [ReLU](include/modules/activations/relu.hpp)
+-   [Softmax](include/modules/activations/softmax.hpp)
+
+Loss function:
+-   [Mean Squared Error](include/modules/losses/mse.hpp)
+-   [Cross Entropy Loss](include/modules/losses/cross_entropy.hpp)
+
+Optimizer:
+-   [Adam](include/modules/optimizers/adam.hpp)
+-   [SGD (Stochastic Gradient Descent)](include/modules/optimizers/sgd.hpp)
+
+Container:
+-   [Sequential](include/modules/containers/sequential.hpp)
 
 More to come.
 
-**Current achievements: achieving 95% accuracy on MNIST.**
-
 > [!NOTE]
 > To support and foster the growth of the project, you could ⭐ [star](https://github.com/lucaswychan/neuralnet-cpp) this project on GitHub. Discussion and suggestions are more welcome!
+
+## Training Curves
+
+Here are the training curves comparing Adam and SGD optimizers by running MLP on MNIST with batch size = 64, epoch = 1, learning rate = 0.01:
+
+![Training Curves](assets/training_curves.png)
+
+The codes to obtain the data are written in pure C++ from scratch. For the details of the training pipeline, you can refer to [main.cpp](examples/main.cpp).
 
 ## Get Started
 
@@ -69,7 +91,7 @@ For more details about tensor, please refer to [tensor tutorial](docs/tensor.md)
 
 ## Sequential Container
 
-To simply create your own neural network by stacking layers, feel free to use [`Sequential`](include/modules/containers/sequential.hpp). It is similar to keras `Sequential` (Although this repo should be a pytorch-like implementation :) )
+To simply create your own neural network by stacking layers, feel free to use [`Sequential`](include/modules/containers/sequential.hpp). It accepts an array of pointers of any subclass of [`Module`](include/core/module.hpp).
 
 ### Example Usage
 
@@ -80,23 +102,22 @@ To simply create your own neural network by stacking layers, feel free to use [`
 #include "relu.hpp"
 #include "dropout.hpp"
 #include <vector>
+using namespace nn;
 using namespace std;
 
-vector<Module*> layers = { new Linear(768, 256), 
-                           new ReLU(), 
-                           new Dropout(0.2),
-                           new Linear(256, 128),
-                           new ReLU(),
-                           new Dropout(0.2),
-                           new Linear(128, 10),
-                         }
-
-Sequential container = layers;
+Sequential layers = Sequential({ new Linear(768, 256), 
+                                 new ReLU(), 
+                                 new Dropout(0.2),
+                                 new Linear(256, 128),
+                                 new ReLU(),
+                                 new Dropout(0.2),
+                                 new Linear(128, 10),
+                              })
 
 /*
-To perform forward pass, simply do 'output = container(input)'
+To perform forward pass, simply do 'output = layers(input)'
 
-Similarily, do 'container.backward(grad_output)' to perform backward pass.
+Similarily, do 'layers.backward(grad_output)' to perform backward pass (grad_output should be obtained from the backward pass of the criterion (i.e. grad_output = criterion.backward())).
 
 For more details, please check main.cpp in examples
 */
@@ -121,9 +142,6 @@ class MyModule : public Module {
             // Your code here
         }
         virtual Tensor<> backward(const Tensor<>& grad_output) override {
-            // Your code here
-        }
-        virtual void update_params(const float lr) override {
             // Your code here
         }
 };

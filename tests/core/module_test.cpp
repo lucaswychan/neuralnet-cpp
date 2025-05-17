@@ -9,7 +9,6 @@ public:
     // Since doctest doesn't have built-in mocking, we'll implement a simple mock
     Tensor<> expected_forward_output;
     Tensor<> expected_backward_output;
-    bool update_params_called = false;
     
     Tensor<> forward(const Tensor<>& input) override {
         return expected_forward_output;
@@ -17,10 +16,6 @@ public:
     
     Tensor<> backward(const Tensor<>& grad_output) override {
         return expected_backward_output;
-    }
-    
-    void update_params(float learning_rate) override {
-        update_params_called = true;
     }
 };
 
@@ -49,13 +44,6 @@ TEST_CASE("ModuleTest - Backward Pass") {
     
     Tensor<> result = module.backward(grad_output);
     CHECK(result == expected_grad_input);
-}
-
-TEST_CASE("ModuleTest - Update Parameters") {
-    MockModule module;
-    
-    module.update_params(0.001f);
-    CHECK(module.update_params_called);
 }
 
 TEST_CASE("ModuleTest - Operator Overload") {
