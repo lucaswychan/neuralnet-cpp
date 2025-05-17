@@ -1,7 +1,10 @@
 #include <numeric>
+#include <fstream>
 #include "mlp.hpp"
 #include "mnist.hpp"
 #include "cross_entropy.hpp"
+#include "adam.hpp"
+#include "sgd.hpp"
 #include "accuracy.hpp"
 #include "utils.hpp"
 using namespace nn;
@@ -12,9 +15,9 @@ int main()
     // Define the hyperparameters
 
     const float LR = 0.01;
-    const float EPOCH = 10;
+    const float EPOCH = 1;
     const float BATCH_SIZE = 64;
-    const float DROPOUT_P = 0.3;
+    const float DROPOUT_P = 0.2;
 
     MNIST dataset(BATCH_SIZE);
 
@@ -39,10 +42,28 @@ int main()
 
     cout << "Finished loss initialization" << endl;
 
+    // Define the optimizer
+    Adam optimizer = Adam(model, LR);
+
+    cout << "Finished optimizer initialization" << endl;
+
     float loss = 0.0;
     float acc = 0.0;
     vector<float> loss_list;
     vector<float> accuracy_list;
+    
+    // Create files to save metrics
+    ofstream loss_file("training_loss.txt");
+    ofstream acc_file("training_accuracy.txt");
+    
+    if (!loss_file.is_open() || !acc_file.is_open()) {
+        cerr << "Failed to open files for saving metrics" << endl;
+        return 1;
+    }
+    
+    // Write headers to files
+    loss_file << "Epoch,Loss" << endl;
+    acc_file << "Epoch,Accuracy" << endl;
 
     cout << "Training started..." << endl;
 
@@ -61,6 +82,8 @@ int main()
             auto batch = dataset.get_next_batch();
             auto [data, labels] = batch.to_tensor();
 
+            optimizer.zero_grad();
+
             // forward propagation
             Tensor<> output = model(data);
 
@@ -73,7 +96,8 @@ int main()
             // backward propagation
             Tensor<> grad = criterion.backward();
             model.backward(grad);
-            model.update_params(LR);
+
+            optimizer.step();
 
             // print the training stats
             print_stats_line(i, loss, acc);
@@ -82,11 +106,20 @@ int main()
         float total_loss = accumulate(loss_list.begin(), loss_list.end(), 0.0) / loss_list.size();
         float total_acc = accumulate(accuracy_list.begin(), accuracy_list.end(), 0.0) / accuracy_list.size() * 100;
 
+        // Save metrics to files
+        loss_file << e + 1 << "," << total_loss << endl;
+        acc_file << e + 1 << "," << total_acc << endl;
+
         cout << "------------------------------------" << endl;
         cout << "Total Loss in Epoch " << e + 1 << " = " << total_loss << "" << endl;
         cout << "Total Accuracy in Epoch " << e + 1 << " = " << total_acc << "%" << endl;
         cout << "------------------------------------" << endl;
     }
+
+    // Close metrics files
+    loss_file.close();
+    acc_file.close();
+    cout << "Training metrics saved to training_loss.txt and training_accuracy.txt" << endl;
 
     // ============================ Inference ====================================
 
@@ -131,6 +164,18 @@ int main()
 
     float total_loss = accumulate(loss_list.begin(), loss_list.end(), 0.0) / loss_list.size();
     float total_acc = accumulate(accuracy_list.begin(), accuracy_list.end(), 0.0) / accuracy_list.size() * 100;
+
+    // Save test metrics to files
+    ofstream test_loss_file("test_loss.txt");
+    ofstream test_acc_file("test_accuracy.txt");
+    
+    if (test_loss_file.is_open() && test_acc_file.is_open()) {
+        test_loss_file << "Loss," << total_loss << endl;
+        test_acc_file << "Accuracy," << total_acc << endl;
+        test_loss_file.close();
+        test_acc_file.close();
+        cout << "Test metrics saved to test_loss.txt and test_accuracy.txt" << endl;
+    }
 
     cout << "Average Loss on Test Data = " << total_loss << "" << endl;
     cout << "Average Accuracy on Test Data = " << total_acc << "%" << endl;

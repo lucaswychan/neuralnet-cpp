@@ -14,17 +14,6 @@ SGD::SGD(const Module &model, float learning_rate, float momentum, float weight_
     }
 }
 
-// // Register parameter with momentum buffer
-// void SGD::register_parameter(const string& name, Tensor<>& param, Tensor<>& grad) {
-//     // Call base class implementation
-//     Optimizer::register_parameter(name, param, grad);
-    
-//     // Initialize velocity buffer if using momentum
-//     if (momentum_ > 0.0f) {
-//         velocity_[name] = Tensor<>(param.shapes(), 0.0f);
-//     }
-// }
-
 void SGD::step() {
     for (auto& [name, param] : params_) {
         Tensor<>& grad = *grads_[name];

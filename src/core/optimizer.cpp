@@ -5,20 +5,8 @@ using namespace nn;
 Optimizer::Optimizer(const Module &model, float learning_rate) : learning_rate_(learning_rate)
 {
     // Get all parameters from the model
-    model.get_parameters(this->params_, this->grads_);
-
-    for (auto &[name, param] : this->params_)
-    {
-        cout << "Parameter " << name << " address: " << param << endl;
-    }
+    model.register_parameters(this->params_, this->grads_);
 }
-
-// // Register individual parameters
-// void Optimizer::register_parameter(const string &name, Tensor<> &param, Tensor<> &grad)
-// {
-//     this->params_[name] = &param;
-//     this->grads_[name] = &grad;
-// }
 
 void Optimizer::zero_grad()
 {

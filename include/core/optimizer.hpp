@@ -18,9 +18,6 @@ namespace nn
         
         virtual ~Optimizer() = default;
 
-        // Register parameters that need optimization
-        // virtual void register_parameter(const string &name, Tensor<> &param, Tensor<> &grad);
-
         // Pure virtual method for updating parameters
         virtual void step() = 0;
 

@@ -3,8 +3,8 @@
 using namespace nn;
 
 // Constructor with model
-Adam::Adam(const Module &model, float learning_rate, float beta1, float beta2, float epsilon)
-    : Optimizer(model, learning_rate), beta1_(beta1), beta2_(beta2), epsilon_(epsilon), t_(0)
+Adam::Adam(const Module &model, float learning_rate, float beta1, float beta2, float epsilon, float weight_decay)
+    : Optimizer(model, learning_rate), beta1_(beta1), beta2_(beta2), epsilon_(epsilon), t_(0), weight_decay_(weight_decay)
 {
     // Initialize moment buffers
     for (auto &[name, param] : this->params_)
@@ -13,14 +13,6 @@ Adam::Adam(const Module &model, float learning_rate, float beta1, float beta2, f
         this->v_[name] = Tensor<>(param->shapes(), 0.0f);
     }
 }
-
-// // Register parameter with momentum buffers
-// void Adam::register_parameter(const string &name, Tensor<> &param, Tensor<> &grad)
-// {
-//     Optimizer::register_parameter(name, param, grad);
-//     this->m_[name] = Tensor<>(param.shapes(), 0.0f); // First moment
-//     this->v_[name] = Tensor<>(param.shapes(), 0.0f); // Second moment
-// }
 
 void Adam::step()
 {
@@ -45,6 +37,12 @@ void Adam::step()
         Tensor<> &grad = *this->grads_[name];
         Tensor<> &m = this->m_[name];
         Tensor<> &v = this->v_[name];
+
+        // Apply weight decay
+        if (this->weight_decay_ > 0.0f)
+        {
+            grad = grad + *param * this->weight_decay_;
+        }
 
         // Update biased first and second moment estimates
         m = m * this->beta1_ + grad * (1.0f - this->beta1_);
