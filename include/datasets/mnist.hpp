@@ -61,4 +61,8 @@ public:
     inline size_t get_current_batch_idxs() const {
         return this->current_batch_idxs;
     }
+
+    inline size_t get_batch_size() const {
+        return this->batch_size;
+    }
 };
