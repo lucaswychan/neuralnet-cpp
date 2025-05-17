@@ -153,6 +153,11 @@ Tensor<> convolution(const size_tp2 &stride, const size_tp2 &dilation, const vec
  */
 const vector<size_t> calculate_output_shape(const vector<size_t> &input_shape, const int64_t out_channel, const size_tp2 &kernel_size, const size_tp2 &stride, const size_tp2 &padding, const size_tp2 &dilation)
 {
+    /*
+    The formula is as follows:
+    H_out = (H_in + 2 * padding.first - dilation.first * (kernel_size.first - 1) - 1) / stride.first + 1
+    W_out = (W_in + 2 * padding.second - dilation.second * (kernel_size.second - 1) - 1) / stride.second + 1
+    */
     if (input_shape.size() != 4)
     {
         throw std::invalid_argument("Input shape must be 4D");

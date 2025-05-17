@@ -12,8 +12,8 @@ class Loss {
 
 
     protected:
-        Tensor<> Y_cache_;
-        Tensor<> Y_hat_cache_;
+        Tensor<> Y_cache_; // store the label of the correct class
+        Tensor<> Y_hat_cache_; // store the output of the model
     };
 }
 
